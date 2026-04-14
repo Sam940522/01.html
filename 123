@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>ESP32 濕度、灰塵與溫度</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    height: 100vh;
+    display: flex;
+}
+
+/* 左右區塊 */
+.left, .right {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    justify-content: space-around;
+    align-items: center;
+}
+
+/* 左側上方：濕度 */
+.left .top {
+    width: 90%;
+    background: linear-gradient(#4facfe, #00f2fe);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+/* 左側下方：灰塵感測 */
+.left .bottom {
+    width: 90%;
+    background: linear-gradient(#999999, #555555);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+/* 右側：溫度折線圖 */
+.right {
+    background-color: white; /* 改為白色背景 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: black; /* 文字改黑色，適合白色背景 */
+}
+
+canvas {
+    width: 90% !important;
+    height: 70% !important;
+}
+
+h1 {
+    font-size: 30px;
+    margin: 0;
+}
+
+.value {
+    font-size: 50px;
+    margin-top: 10px;
+}
+
+.status {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #333;
+}
+</style>
+</head>
+
+<body>
+
+<div class="left">
+    <div class="top">
+        <h1>濕度</h1>
+        <div class="value" id="hum">--%</div>
+    </div>
+    <div class="bottom">
+        <h1>灰塵感測</h1>
+        <div class="value" id="dust">--</div>
+    </div>
+</div>
+
+<div class="right">
+    <h1 style="color:black;">溫度趨勢</h1>
+    <canvas id="tempChart"></canvas>
+</div>
+
+<div class="status" id="status">連線中</div>
+
+<script>
+const ctx = document.getElementById('tempChart').getContext('2d');
+
+const tempData = {
+    labels: [],
+    datasets: [{
+        label: '溫度 (°C)',
+        data: [],
+        borderColor: 'red', // 線條顏色改為紅色，白色背景可見
+        borderWidth: 2,
+        tension: 0.3
+    }]
+};
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: tempData,
+    options: {
+        responsive: true,
+        animation: false,
+        scales: {
+            x: { ticks: { color: 'black' } }, // X 軸文字改黑色
+            y: { ticks: { color: 'black' } }  // Y 軸文字改黑色
+        },
+        plugins: {
+            legend: { labels: { color: 'black' } } // 圖例文字改黑色
+        }
+    }
+});
+
+async function updateData() {
+    try {
+        const res = await fetch('http://192.168.0.151/data');
+        if (!res.ok) throw "ESP32 無回應";
+
+        const data = await res.json();
+        const temp = data.temperature;
+        const hum = data.humidity;
+        const dust = data.dust;
+
+        document.getElementById('hum').innerText = hum + "%";
+        document.getElementById('dust').innerText = dust;
+
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2,'0');
+        const mm = String(now.getMinutes()).padStart(2,'0');
+        const ss = String(now.getSeconds()).padStart(2,'0');
+
+        if (tempData.labels.length === 0) {
+            tempData.labels.push(`${hh}:${mm}`);
+            tempData.datasets[0].data.push(temp);
+        } else {
+            tempData.labels[0] = `${hh}:${mm}`;
+            tempData.labels.push(`${ss}s`);
+            tempData.datasets[0].data.push(temp);
+        }
+
+        if (tempData.labels.length > 6) {
+            tempData.labels.splice(1,1);
+            tempData.datasets[0].data.splice(1,1);
+        }
+
+        chart.update();
+        document.getElementById('status').innerText = "已連線";
+
+    } catch (e) {
+        console.error("抓取數據失敗", e);
+        document.getElementById('status').innerText = "連線失敗，立即重試";
+        setTimeout(updateData, 2000);
+    }
+}
+
+setInterval(updateData, 2000);
+updateData();
+</script>
+
+</body>
+</html>
