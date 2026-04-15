@@ -24,7 +24,7 @@ body {
     align-items: center;
 }
 
-/* 左側上方：濕度 */
+/* 濕度 */
 .left .top {
     width: 90%;
     background: linear-gradient(#4facfe, #00f2fe);
@@ -36,7 +36,7 @@ body {
     padding: 20px;
 }
 
-/* 左側下方：灰塵 */
+/* 灰塵 */
 .left .bottom {
     width: 90%;
     background: linear-gradient(#999999, #555555);
@@ -48,9 +48,9 @@ body {
     padding: 20px;
 }
 
-/* 右側 */
+/* 右側圖表 */
 .right {
-    background-color: white;
+    background: white;
     color: black;
 }
 
@@ -60,8 +60,8 @@ canvas {
 }
 
 h1 {
-    font-size: 30px;
     margin: 0;
+    font-size: 30px;
 }
 
 .value {
@@ -86,6 +86,7 @@ h1 {
         <h1>濕度</h1>
         <div class="value" id="hum">--%</div>
     </div>
+
     <div class="bottom">
         <h1>灰塵感測</h1>
         <div class="value" id="dust">--</div>
@@ -122,60 +123,49 @@ const chart = new Chart(ctx, {
         scales: {
             x: { ticks: { color: 'black' } },
             y: { ticks: { color: 'black' } }
-        },
-        plugins: {
-            legend: { labels: { color: 'black' } }
         }
     }
 });
 
 async function updateData() {
     try {
-        // 🔥 Firebase 資料來源
         const res = await fetch("https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/data.json");
         if (!res.ok) throw "Firebase 無回應";
 
         const data = await res.json();
 
-        const temp = data.temperature;
-        const hum = data.humidity;
-        const dust = data.dust || "--";
+        // 🔥 這裡是你真正問題（data.data）
+        const temp = data.data.temperature;
+        const hum = data.data.humidity;
+        const dust = data.data.dust || "--";
 
-        // 更新數值
-        document.getElementById('hum').innerText = hum + "%";
-        document.getElementById('dust').innerText = dust;
+        // 更新畫面
+        document.getElementById("hum").innerText = hum + "%";
+        document.getElementById("dust").innerText = dust;
 
         // 時間
         const now = new Date();
-        const hh = String(now.getHours()).padStart(2,'0');
-        const mm = String(now.getMinutes()).padStart(2,'0');
-        const ss = String(now.getSeconds()).padStart(2,'0');
+        const time = String(now.getHours()).padStart(2,'0') + ":" +
+                     String(now.getMinutes()).padStart(2,'0');
 
-        if (tempData.labels.length === 0) {
-            tempData.labels.push(`${hh}:${mm}`);
-            tempData.datasets[0].data.push(temp);
-        } else {
-            tempData.labels[0] = `${hh}:${mm}`;
-            tempData.labels.push(`${ss}s`);
-            tempData.datasets[0].data.push(temp);
-        }
+        tempData.labels.push(time);
+        tempData.datasets[0].data.push(temp);
 
-        // 最多6筆資料
+        // 保留6筆
         if (tempData.labels.length > 6) {
-            tempData.labels.splice(1,1);
-            tempData.datasets[0].data.splice(1,1);
+            tempData.labels.shift();
+            tempData.datasets[0].data.shift();
         }
 
         chart.update();
-        document.getElementById('status').innerText = "已連線 Firebase";
+        document.getElementById("status").innerText = "已連線 Firebase";
 
     } catch (e) {
         console.error(e);
-        document.getElementById('status').innerText = "連線失敗，重試中";
+        document.getElementById("status").innerText = "連線失敗";
     }
 }
 
-// 每2秒更新
 setInterval(updateData, 2000);
 updateData();
 </script>
