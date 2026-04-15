@@ -111,7 +111,7 @@ const tempData = {
     datasets: [{
         label: '溫度 (°C)',
         data: [],
-        borderColor: 'red', // 線條顏色改為紅色，白色背景可見
+        borderColor: 'red',
         borderWidth: 2,
         tension: 0.3
     }]
@@ -124,28 +124,32 @@ const chart = new Chart(ctx, {
         responsive: true,
         animation: false,
         scales: {
-            x: { ticks: { color: 'black' } }, // X 軸文字改黑色
-            y: { ticks: { color: 'black' } }  // Y 軸文字改黑色
+            x: { ticks: { color: 'black' } },
+            y: { ticks: { color: 'black' } }
         },
         plugins: {
-            legend: { labels: { color: 'black' } } // 圖例文字改黑色
+            legend: { labels: { color: 'black' } }
         }
     }
 });
 
 async function updateData() {
     try {
-        const res = await fetch('http://192.168.0.151/data');
-        if (!res.ok) throw "ESP32 無回應";
+        // ✅ 改成 Firebase
+        const res = await fetch("https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app/data.json");
+        if (!res.ok) throw "Firebase 無回應";
 
         const data = await res.json();
+
         const temp = data.temperature;
         const hum = data.humidity;
-        const dust = data.dust;
+        const dust = data.dust || "--"; // 沒有就顯示 --
 
+        // 更新畫面
         document.getElementById('hum').innerText = hum + "%";
         document.getElementById('dust').innerText = dust;
 
+        // 時間處理
         const now = new Date();
         const hh = String(now.getHours()).padStart(2,'0');
         const mm = String(now.getMinutes()).padStart(2,'0');
@@ -160,34 +164,22 @@ async function updateData() {
             tempData.datasets[0].data.push(temp);
         }
 
+        // 最多顯示6筆
         if (tempData.labels.length > 6) {
             tempData.labels.splice(1,1);
             tempData.datasets[0].data.splice(1,1);
         }
 
         chart.update();
-        document.getElementById('status').innerText = "已連線";
+        document.getElementById('status').innerText = "已連線 Firebase";
 
     } catch (e) {
         console.error("抓取數據失敗", e);
-        document.getElementById('status').innerText = "連線失敗，立即重試";
-        setTimeout(updateData, 2000);
+        document.getElementById('status').innerText = "連線失敗，重試中";
     }
 }
 
-    async function getData() {
-  const url = "https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app/data.json";
-
-  const res = await fetch(url);
-  const data = await res.json();
-
-  console.log(data);
-
-  document.getElementById("temp").innerText = data.temperature;
-  document.getElementById("hum").innerText = data.humidity;
-}
-
-setInterval(getData, 3000); // 每3秒更新
+// 每2秒更新
 setInterval(updateData, 2000);
 updateData();
 </script>
