@@ -175,6 +175,19 @@ async function updateData() {
     }
 }
 
+    async function getData() {
+  const url = "https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app/data.json";
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  console.log(data);
+
+  document.getElementById("temp").innerText = data.temperature;
+  document.getElementById("hum").innerText = data.humidity;
+}
+
+setInterval(getData, 3000); // 每3秒更新
 setInterval(updateData, 2000);
 updateData();
 </script>
