@@ -132,7 +132,7 @@ const chart = new Chart(ctx, {
 async function updateData() {
     try {
         // 🔥 Firebase 資料來源
-        const res = await fetch("https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app/data.json");
+        const res = await fetch("https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/data.json");
         if (!res.ok) throw "Firebase 無回應";
 
         const data = await res.json();
