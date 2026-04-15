@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 濕度、灰塵與溫度</title>
+<title>ESP32 溫濕度監控</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,7 +19,6 @@ body {
     width: 50%;
     display: flex;
     flex-direction: column;
-    color: white;
     justify-content: space-around;
     align-items: center;
 }
@@ -28,24 +27,20 @@ body {
 .left .top {
     width: 90%;
     background: linear-gradient(#4facfe, #00f2fe);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     border-radius: 10px;
     padding: 20px;
+    text-align: center;
+    color: white;
 }
 
-/* 灰塵 */
+/* 溫度 */
 .left .bottom {
     width: 90%;
-    background: linear-gradient(#999999, #555555);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    background: linear-gradient(#ff9966, #ff5e62);
     border-radius: 10px;
     padding: 20px;
+    text-align: center;
+    color: white;
 }
 
 /* 右側圖表 */
@@ -61,7 +56,7 @@ canvas {
 
 h1 {
     margin: 0;
-    font-size: 30px;
+    font-size: 28px;
 }
 
 .value {
@@ -88,8 +83,8 @@ h1 {
     </div>
 
     <div class="bottom">
-        <h1>灰塵感測</h1>
-        <div class="value" id="dust">--</div>
+        <h1>溫度</h1>
+        <div class="value" id="tempText">--°C</div>
     </div>
 </div>
 
@@ -98,7 +93,7 @@ h1 {
     <canvas id="tempChart"></canvas>
 </div>
 
-<div class="status" id="status">連線中</div>
+<div class="status" id="status">連線中...</div>
 
 <script>
 const ctx = document.getElementById('tempChart').getContext('2d');
@@ -129,39 +124,42 @@ const chart = new Chart(ctx, {
 
 async function updateData() {
     try {
-        const res = await fetch("https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/data.json");
-        if (!res.ok) throw "Firebase 無回應";
+        // ✅ Firebase 正確路徑
+        const res = await fetch("https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/.json");
+        if (!res.ok) throw new Error("Firebase 無回應");
 
         const data = await res.json();
 
-        // 🔥 這裡是你真正問題（data.data）
-        const temp = data.data.temperature;
-        const hum = data.data.humidity;
-        const dust = data.data.dust || "--";
+        // ✅ 正確結構：sensor
+        const temp = data.sensor.temperature;
+        const hum = data.sensor.humidity;
 
-        // 更新畫面
+        // 更新數值
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("dust").innerText = dust;
+        document.getElementById("tempText").innerText = temp + "°C";
 
         // 時間
         const now = new Date();
         const time = String(now.getHours()).padStart(2,'0') + ":" +
-                     String(now.getMinutes()).padStart(2,'0');
+                     String(now.getMinutes()).padStart(2,'0') + ":" +
+                     String(now.getSeconds()).padStart(2,'0');
 
+        // 加入圖表
         tempData.labels.push(time);
         tempData.datasets[0].data.push(temp);
 
-        // 保留6筆
+        // 保留 6 筆
         if (tempData.labels.length > 6) {
             tempData.labels.shift();
             tempData.datasets[0].data.shift();
         }
 
         chart.update();
+
         document.getElementById("status").innerText = "已連線 Firebase";
 
-    } catch (e) {
-        console.error(e);
+    } catch (err) {
+        console.error(err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
@@ -172,3 +170,4 @@ updateData();
 
 </body>
 </html>
+
