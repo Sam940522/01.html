@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 溫濕度監控</title>
+<title>ESP32 Firebase 監控</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -14,7 +14,6 @@ body {
     display: flex;
 }
 
-/* 左右區塊 */
 .left, .right {
     width: 50%;
     display: flex;
@@ -23,50 +22,28 @@ body {
     align-items: center;
 }
 
-/* 濕度 */
-.left .top {
+.left .box {
     width: 90%;
-    background: linear-gradient(#4facfe, #00f2fe);
-    border-radius: 10px;
     padding: 20px;
-    text-align: center;
+    border-radius: 10px;
     color: white;
+    text-align: center;
 }
 
-/* 溫度 */
-.left .bottom {
-    width: 90%;
-    background: linear-gradient(#ff9966, #ff5e62);
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    color: white;
-}
+.hum { background: linear-gradient(#4facfe, #00f2fe); }
+.temp { background: linear-gradient(#ff9966, #ff5e62); }
 
-/* 右側圖表 */
 .right {
     background: white;
-    color: black;
-}
-
-canvas {
-    width: 90% !important;
-    height: 70% !important;
-}
-
-h1 {
-    margin: 0;
-    font-size: 28px;
 }
 
 .value {
     font-size: 50px;
-    margin-top: 10px;
 }
 
 .status {
     position: fixed;
-    bottom: 20px;
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     color: #333;
@@ -77,97 +54,81 @@ h1 {
 <body>
 
 <div class="left">
-    <div class="top">
-        <h1>濕度</h1>
-        <div class="value" id="hum">--%</div>
+    <div class="box hum">
+        <h2>濕度</h2>
+        <div class="value" id="hum">--</div>
     </div>
 
-    <div class="bottom">
-        <h1>溫度</h1>
-        <div class="value" id="tempText">--°C</div>
+    <div class="box temp">
+        <h2>溫度</h2>
+        <div class="value" id="temp">--</div>
     </div>
 </div>
 
 <div class="right">
-    <h1>溫度趨勢</h1>
-    <canvas id="tempChart"></canvas>
+    <h2>溫度趨勢</h2>
+    <canvas id="chart"></canvas>
 </div>
 
-<div class="status" id="status">連線中...</div>
+<div class="status" id="status">初始化...</div>
 
 <script>
-const ctx = document.getElementById('tempChart').getContext('2d');
+const ctx = document.getElementById("chart").getContext("2d");
 
-const tempData = {
+const dataChart = {
     labels: [],
     datasets: [{
-        label: '溫度 (°C)',
+        label: "溫度",
         data: [],
-        borderColor: 'red',
-        borderWidth: 2,
+        borderColor: "red",
         tension: 0.3
     }]
 };
 
 const chart = new Chart(ctx, {
-    type: 'line',
-    data: tempData,
-    options: {
-        responsive: true,
-        animation: false,
-        scales: {
-            x: { ticks: { color: 'black' } },
-            y: { ticks: { color: 'black' } }
-        }
-    }
+    type: "line",
+    data: dataChart
 });
 
-async function updateData() {
+async function update() {
     try {
-        // ✅ Firebase 正確路徑
-        const res = await fetch("https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/.json");
-        if (!res.ok) throw new Error("Firebase 無回應");
+        const url = "https://remove-wet-ash-default-rtdb.asia-southeast1.firebasedatabase.app/.json";
 
+        const res = await fetch(url);
         const data = await res.json();
 
-        // ✅ 正確結構：sensor
+        console.log("Firebase:", data);
+
+        // ✅ 正確路徑（你已確認）
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
 
-        // 更新數值
+        document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("tempText").innerText = temp + "°C";
 
-        // 時間
-        const now = new Date();
-        const time = String(now.getHours()).padStart(2,'0') + ":" +
-                     String(now.getMinutes()).padStart(2,'0') + ":" +
-                     String(now.getSeconds()).padStart(2,'0');
+        const time = new Date().toLocaleTimeString();
 
-        // 加入圖表
-        tempData.labels.push(time);
-        tempData.datasets[0].data.push(temp);
+        dataChart.labels.push(time);
+        dataChart.datasets[0].data.push(temp);
 
-        // 保留 6 筆
-        if (tempData.labels.length > 6) {
-            tempData.labels.shift();
-            tempData.datasets[0].data.shift();
+        if (dataChart.labels.length > 6) {
+            dataChart.labels.shift();
+            dataChart.datasets[0].data.shift();
         }
 
         chart.update();
 
-        document.getElementById("status").innerText = "已連線 Firebase";
+        document.getElementById("status").innerText = "已連線";
 
     } catch (err) {
-        console.error(err);
+        console.error("錯誤:", err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
 
-setInterval(updateData, 2000);
-updateData();
+update();
+setInterval(update, 2000);
 </script>
 
 </body>
 </html>
-
