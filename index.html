@@ -12,7 +12,7 @@ body {
     font-family: Arial;
     height: 100vh;
     display: flex;
-    background: #e6f4ff;
+    background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
 /* 左右區塊 */
@@ -44,9 +44,9 @@ body {
     background: linear-gradient(#ff9966, #ff5e62);
 }
 
-/* 灰塵 ash */
+/* 灰塵 */
 .ash {
-    background: linear-gradient(#bbbbbb, #666666);
+    background: linear-gradient(#00c853, #009624);
 }
 
 .value {
@@ -113,14 +113,15 @@ const chart = new Chart(ctx, {
 
 async function update() {
     try {
+        // ✅ 正確 Firebase URL（一定要 .json）
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
 
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log("Firebase原始資料:", data);
+        console.log("Firebase資料:", data);
 
-        // ❗ 防呆（避免整個壞掉）
+        // ❗ 防炸（避免整個壞掉）
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
@@ -128,7 +129,7 @@ async function update() {
 
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;   // ✅ 這裡就是關鍵
+        const ash = data.sensor.ash;   // ⭐ 重點
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
