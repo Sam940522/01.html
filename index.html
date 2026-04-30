@@ -14,29 +14,23 @@ body {
     display: flex;
 }
 
+/* 左右區塊 */
 .left, .right {
     width: 50%;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: center;
 }
 
+/* 卡片（有框框🔥） */
 .left .box {
     width: 60%;
     padding: 20px;
     border-radius: 10px;
-    color: white;
     text-align: center;
-}
-
-.left .box {
-    width: 60%;
-    padding: 20px;
-    border-radius: 10px;
     color: white;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25); /* 👈 框框效果 */
 }
 
 /* 濕度 */
@@ -49,7 +43,7 @@ body {
     background: linear-gradient(#ff9966, #ff5e62); 
 }
 
-/* 灰燼 ash */
+/* 灰塵（第三個） */
 .ash { 
     background: linear-gradient(#bbbbbb, #666666); 
 }
@@ -58,10 +52,12 @@ body {
     background: white;
 }
 
+/* 數值 */
 .value {
     font-size: 50px;
 }
 
+/* 狀態 */
 .status {
     position: fixed;
     bottom: 10px;
@@ -85,8 +81,9 @@ body {
         <div class="value" id="temp">--</div>
     </div>
     
+    <!-- ✅ 第三個灰塵感測 -->
     <div class="box ash">
-        <h2>灰燼濃度</h2>
+        <h2>灰塵感測</h2>
         <div class="value" id="ash">--</div>
     </div>
 </div>
@@ -133,7 +130,9 @@ async function update() {
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash;
+
+        // ✅ 灰塵顯示（防呆）
+        document.getElementById("ash").innerText = ash ?? "--";
 
         const time = new Date().toLocaleTimeString();
 
