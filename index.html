@@ -30,8 +30,15 @@ body {
     text-align: center;
 }
 
-.hum { background: linear-gradient(#4facfe, #00f2fe); }
-.temp { background: linear-gradient(#ff9966, #ff5e62); }
+.hum { 
+    background: linear-gradient(#4facfe, #00f2fe); 
+     }
+.temp { 
+    background: linear-gradient(#ff9966, #ff5e62); 
+}
+.dust { 
+    background: linear-gradient(#999, #666); 
+}
 
 .right {
     background: white;
@@ -108,9 +115,12 @@ async function update() {
         //正確路徑
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
+        const dust = data.sensor.dust;
+       
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
+        document.getElementById("dust").innerText = dust;
 
         const time = new Date().toLocaleTimeString();
 
