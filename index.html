@@ -23,7 +23,7 @@ body {
     align-items: center;
 }
 
-/* 卡片 */
+/* 卡片樣式（有框感） */
 .left .box {
     width: 60%;
     padding: 20px;
@@ -44,8 +44,8 @@ body {
 }
 
 /* 灰塵 */
-.ash { 
-    background: linear-gradient(#ff9966, #ff5e62); 
+.dust { 
+    background: linear-gradient(#bbbbbb, #666666); 
 }
 
 .right {
@@ -81,9 +81,9 @@ body {
     </div>
 
     <!-- ✅ 第三個：灰塵 -->
-    <div class="box ash">
+    <div class="box dust">
         <h2>灰塵濃度</h2>
-        <div class="value" id="ash">--</div>
+        <div class="value" id="dust">--</div>
     </div>
 
 </div>
@@ -124,7 +124,7 @@ async function update() {
 
         console.log("Firebase:", data);
 
-        // ❗ 防呆（避免整個壞掉）
+        // ❗ 防止炸掉
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
@@ -132,11 +132,11 @@ async function update() {
 
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
+        const dust = data.sensor.dust;
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash ?? "--";
+        document.getElementById("dust").innerText = dust ?? "--";
 
         const time = new Date().toLocaleTimeString();
 
@@ -153,7 +153,7 @@ async function update() {
         document.getElementById("status").innerText = "已連線";
 
     } catch (err) {
-        console.error(err);
+        console.error("錯誤:", err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
