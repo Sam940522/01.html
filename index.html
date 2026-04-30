@@ -83,7 +83,7 @@ body {
     <!-- ✅ 第三個：灰塵 -->
     <div class="box dust">
         <h2>灰塵濃度</h2>
-        <div class="value" id="dust">--</div>
+        <div class="value" id="ash">--</div>
     </div>
 
 </div>
@@ -132,11 +132,11 @@ async function update() {
 
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
-        const dust = data.sensor.dust;
+        const ash = data.sensor.ash;
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("dust").innerText = dust ?? "--";
+        document.getElementById("ash").innerText = ash;
 
         const time = new Date().toLocaleTimeString();
 
