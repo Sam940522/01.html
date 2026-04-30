@@ -1,4 +1,4 @@
-<html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -23,20 +23,25 @@ body {
 }
 
 .left .box {
-    width: 50%;
+    width: 60%;
     padding: 20px;
     border-radius: 10px;
     color: white;
     text-align: center;
 }
 
+/* 濕度 */
 .hum { 
     background: linear-gradient(#4facfe, #00f2fe); 
-     }
+}
+
+/* 溫度 */
 .temp { 
     background: linear-gradient(#ff9966, #ff5e62); 
 }
-.dust { 
+
+/* 灰燼 ash */
+.ash { 
     background: linear-gradient(#bbbbbb, #666666); 
 }
 
@@ -71,11 +76,10 @@ body {
         <div class="value" id="temp">--</div>
     </div>
     
-    <div class="box dust">
-        <h2>灰塵濃度</h2>
-        <div class="value" id="dust">--</div>
+    <div class="box ash">
+        <h2>灰燼濃度</h2>
+        <div class="value" id="ash">--</div>
     </div>
-    
 </div>
 
 <div class="right">
@@ -94,6 +98,8 @@ const dataChart = {
         label: "溫度",
         data: [],
         borderColor: "red",
+        borderWidth: 2,
+        fill: false,
         tension: 0.3
     }]
 };
@@ -112,15 +118,13 @@ async function update() {
 
         console.log("Firebase:", data);
 
-        //正確路徑
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
-        const dust = data.sensor.dust;
-       
+        const ash = data.sensor.ash;
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("dust").innerText = dust;
+        document.getElementById("ash").innerText = ash;
 
         const time = new Date().toLocaleTimeString();
 
