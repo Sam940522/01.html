@@ -12,6 +12,7 @@ body {
     font-family: Arial;
     height: 100vh;
     display: flex;
+    background: #e6f4ff;
 }
 
 /* 左右區塊 */
@@ -23,7 +24,7 @@ body {
     align-items: center;
 }
 
-/* 卡片樣式（有框感） */
+/* 卡片 */
 .left .box {
     width: 60%;
     padding: 20px;
@@ -34,22 +35,18 @@ body {
 }
 
 /* 濕度 */
-.hum { 
-    background: linear-gradient(#4facfe, #00f2fe); 
+.hum {
+    background: linear-gradient(#4facfe, #00f2fe);
 }
 
 /* 溫度 */
-.temp { 
-    background: linear-gradient(#ff9966, #ff5e62); 
+.temp {
+    background: linear-gradient(#ff9966, #ff5e62);
 }
 
-/* 灰塵 */
-.dust { 
-    background: linear-gradient(#e0f7ff, #cfeeff); 
-}
-
-.right {
-    background: white;
+/* 灰塵 ash */
+.ash {
+    background: linear-gradient(#bbbbbb, #666666);
 }
 
 .value {
@@ -80,8 +77,7 @@ body {
         <div class="value" id="temp">--</div>
     </div>
 
-    <!-- ✅ 第三個：灰塵 -->
-    <div class="box dust">
+    <div class="box ash">
         <h2>灰塵濃度</h2>
         <div class="value" id="ash">--</div>
     </div>
@@ -122,9 +118,9 @@ async function update() {
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log("Firebase:", data);
+        console.log("Firebase原始資料:", data);
 
-        // ❗ 防止炸掉
+        // ❗ 防呆（避免整個壞掉）
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
@@ -132,11 +128,11 @@ async function update() {
 
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
+        const ash = data.sensor.ash;   // ✅ 這裡就是關鍵
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash;
+        document.getElementById("ash").innerText = ash ?? "--";
 
         const time = new Date().toLocaleTimeString();
 
