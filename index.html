@@ -15,7 +15,6 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右區塊 */
 .left, .right {
     width: 50%;
     display: flex;
@@ -24,7 +23,6 @@ body {
     align-items: center;
 }
 
-/* 卡片 */
 .left .box {
     width: 60%;
     padding: 20px;
@@ -34,20 +32,9 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* 濕度 */
-.hum {
-    background: linear-gradient(#4facfe, #00f2fe);
-}
-
-/* 溫度 */
-.temp {
-    background: linear-gradient(#ff9966, #ff5e62);
-}
-
-/* 灰塵 */
-.ash {
-    background: linear-gradient(#00c853, #009624);
-}
+.hum { background: linear-gradient(#4facfe, #00f2fe); }
+.temp { background: linear-gradient(#ff9966, #ff5e62); }
+.ash { background: linear-gradient(#00c853, #009624); }
 
 .value {
     font-size: 50px;
@@ -59,6 +46,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     color: #333;
+    font-size: 18px;
 }
 </style>
 </head>
@@ -115,16 +103,37 @@ async function update() {
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log("Firebase資料:", data);
-
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
         }
 
-        const temp = data.sensor.temperature;
-        const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
+        const sensor = data.sensor;
+
+        // ✅ 檢查 timestamp
+        if (!sensor.timestamp) {
+            document.getElementById("status").innerText = "缺少 timestamp";
+            return;
+        }
+
+        const now = Date.now();
+        const diff = now - sensor.timestamp;
+
+        // ❗超過5秒 → 視為拔掉
+        if (diff > 5000) {
+            document.getElementById("status").innerText = "🔴 設備離線（已拔掉）";
+
+            document.getElementById("temp").innerText = "--";
+            document.getElementById("hum").innerText = "--";
+            document.getElementById("ash").innerText = "--";
+
+            return;
+        }
+
+        // ✅ 正常顯示
+        const temp = sensor.temperature;
+        const hum = sensor.humidity;
+        const ash = sensor.ash;
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
@@ -141,10 +150,11 @@ async function update() {
         }
 
         chart.update();
-        document.getElementById("status").innerText = "已連線";
+
+        document.getElementById("status").innerText = "🟢 已連線";
 
     } catch (err) {
-        console.error("錯誤:", err);
+        console.error(err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
