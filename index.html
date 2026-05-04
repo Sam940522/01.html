@@ -15,23 +15,16 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右區 */
 .left, .right {
     width: 50%;
     display: flex;
     flex-direction: column;
+    justify-content: space-evenly;
     align-items: center;
 }
 
-/* 左邊上方集中 */
-.left {
-    justify-content: flex-start;
-    padding-top: 40px;
-    gap: 30px;
-}
-
-/* 感測框 */
-.box {
+/* 感測器卡片 */
+.left .box {
     width: 60%;
     padding: 20px;
     border-radius: 10px;
@@ -46,35 +39,68 @@ body {
 
 .value { font-size: 50px; }
 
-/* 控制區（已改成正常排版，不再 fixed） */
-.control-box {
+/* 🔥 獨立控制區 */
+.controlBox {
     width: 60%;
     padding: 20px;
     border-radius: 10px;
-    background: #ffffffaa;
+    background: white;
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-.control-box button {
-    padding: 10px 25px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.on { background: #00c853; color: white; }
-.off { background: #ff5252; color: white; }
-
-/* 右邊圖表 */
-.right {
-    justify-content: center;
-}
-
-/* 狀態 */
-.status {
+.switchGroup {
     margin-top: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+/* switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { display:none; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.status {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #333;
 }
 </style>
 </head>
@@ -98,14 +124,27 @@ body {
         <div class="value" id="ash">--</div>
     </div>
 
-    <!-- ✅ 已移到灰塵下面 -->
-    <div class="control-box">
-        <h3>開關控制</h3>
+    <!-- 🔥 獨立控制區 -->
+    <div class="controlBox">
+        <h3>Fan Control</h3>
 
-        <button class="on" onclick="setControl(true)">ON</button>
-        <button class="off" onclick="setControl(false)">OFF</button>
+        <div class="switchGroup">
+            <div>
+                <label class="switch">
+                  <input type="checkbox" id="fan1" onchange="toggleFan('fan1')">
+                  <span class="slider"></span>
+                </label>
+                <div>Fan 1</div>
+            </div>
 
-        <div class="status">狀態：<span id="controlState">--</span></div>
+            <div>
+                <label class="switch">
+                  <input type="checkbox" id="fan2" onchange="toggleFan('fan2')">
+                  <span class="slider"></span>
+                </label>
+                <div>Fan 2</div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -114,6 +153,8 @@ body {
     <h2>溫度趨勢</h2>
     <canvas id="chart"></canvas>
 </div>
+
+<div class="status" id="status">初始化...</div>
 
 <script>
 const ctx = document.getElementById("chart").getContext("2d");
@@ -135,40 +176,25 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// 控制風扇
-async function setControl(state) {
-    const value = state ? "ON" : "OFF";
+const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
 
-    await fetch("https://removewesh-default-rtdb.firebaseio.com/control.json", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fan: value })
-    });
-}
-
-// 更新資料
 async function update() {
     try {
-        const res = await fetch("https://removewesh-default-rtdb.firebaseio.com/.json");
+        const res = await fetch(baseURL + "/.json");
         const data = await res.json();
 
         if (!data || !data.sensor) return;
 
-        const t = data.sensor.temperature;
-        const h = data.sensor.humidity;
-        const a = data.sensor.ash;
+        const s = data.sensor;
 
-        document.getElementById("temp").innerText = t + "°C";
-        document.getElementById("hum").innerText = h + "%";
-        document.getElementById("ash").innerText = a;
-
-        const fan = data.control?.fan || "OFF";
-        document.getElementById("controlState").innerText = fan;
+        document.getElementById("temp").innerText = s.temperature + "°C";
+        document.getElementById("hum").innerText = s.humidity + "%";
+        document.getElementById("ash").innerText = s.ash ?? "--";
 
         const time = new Date().toLocaleTimeString();
 
         dataChart.labels.push(time);
-        dataChart.datasets[0].data.push(t);
+        dataChart.datasets[0].data.push(s.temperature);
 
         if (dataChart.labels.length > 6) {
             dataChart.labels.shift();
@@ -177,9 +203,26 @@ async function update() {
 
         chart.update();
 
+        if (data.control) {
+            document.getElementById("fan1").checked = data.control.fan1 === "ON";
+            document.getElementById("fan2").checked = data.control.fan2 === "ON";
+        }
+
+        document.getElementById("status").innerText = "已連線";
+
     } catch (e) {
-        console.log("連線失敗");
+        document.getElementById("status").innerText = "連線失敗";
     }
+}
+
+async function toggleFan(name) {
+    const el = document.getElementById(name);
+    const state = el.checked ? "ON" : "OFF";
+
+    await fetch(baseURL + "/control/" + name + ".json", {
+        method: "PUT",
+        body: JSON.stringify(state)
+    });
 }
 
 update();
