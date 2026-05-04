@@ -23,7 +23,7 @@ body {
     align-items: center;
 }
 
-/* ✅ 左邊改成往上集中 */
+/* 左邊上方集中 */
 .left {
     justify-content: flex-start;
     padding-top: 40px;
@@ -46,17 +46,14 @@ body {
 
 .value { font-size: 50px; }
 
-/* 右邊圖表 */
-.right {
-    justify-content: center;
-}
-
-/* ✅ 開關移到左下角 */
+/* 控制區（已改成正常排版，不再 fixed） */
 .control-box {
-    position: fixed;
-    bottom: 30px;
-    left: 20px;
-    text-align: left;
+    width: 60%;
+    padding: 20px;
+    border-radius: 10px;
+    background: #ffffffaa;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .control-box button {
@@ -70,12 +67,14 @@ body {
 .on { background: #00c853; color: white; }
 .off { background: #ff5252; color: white; }
 
+/* 右邊圖表 */
+.right {
+    justify-content: center;
+}
+
 /* 狀態 */
 .status {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: 10px;
 }
 </style>
 </head>
@@ -99,24 +98,22 @@ body {
         <div class="value" id="ash">--</div>
     </div>
 
+    <!-- ✅ 已移到灰塵下面 -->
+    <div class="control-box">
+        <h3>風扇控制</h3>
+
+        <button class="on" onclick="setControl(true)">ON</button>
+        <button class="off" onclick="setControl(false)">OFF</button>
+
+        <div class="status">狀態：<span id="controlState">--</span></div>
+    </div>
+
 </div>
 
 <div class="right">
     <h2>溫度趨勢</h2>
     <canvas id="chart"></canvas>
 </div>
-
-<!-- 控制 -->
-<div class="control-box">
-    <h3>風扇控制</h3>
-
-    <button class="on" onclick="setControl(true)">ON</button>
-    <button class="off" onclick="setControl(false)">OFF</button>
-
-    <div>狀態：<span id="controlState">--</span></div>
-</div>
-
-<div class="status" id="status">初始化...</div>
 
 <script>
 const ctx = document.getElementById("chart").getContext("2d");
@@ -144,9 +141,7 @@ async function setControl(state) {
 
     await fetch("https://removewesh-default-rtdb.firebaseio.com/control.json", {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fan: value })
     });
 }
@@ -182,10 +177,8 @@ async function update() {
 
         chart.update();
 
-        document.getElementById("status").innerText = "已連線";
-
     } catch (e) {
-        document.getElementById("status").innerText = "連線失敗";
+        console.log("連線失敗");
     }
 }
 
