@@ -40,26 +40,22 @@ body {
 
 .value { font-size: 50px; }
 
-/* 開關 */
+/* 🔥 control 開關 */
 .switch-box {
     position: fixed;
     bottom: 60px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    gap: 40px;
-}
-
-.switch-item {
     text-align: center;
 }
 
-.switch-item button {
-    padding: 10px 20px;
+.switch-box button {
+    padding: 10px 25px;
     margin: 5px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 16px;
 }
 
 .on { background: #00c853; color: white; }
@@ -101,22 +97,15 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- ✅ 兩個開關 -->
+<!-- ✅ control 開關 -->
 <div class="switch-box">
 
-    <div class="switch-item">
-        <h3>開關1</h3>
-        <button class="on" onclick="setSwitch(1,true)">ON</button>
-        <button class="off" onclick="setSwitch(1,false)">OFF</button>
-        <div>狀態：<span id="switchState1">--</span></div>
-    </div>
+    <h3>控制開關</h3>
 
-    <div class="switch-item">
-        <h3>開關2</h3>
-        <button class="on" onclick="setSwitch(2,true)">ON</button>
-        <button class="off" onclick="setSwitch(2,false)">OFF</button>
-        <div>狀態：<span id="switchState2">--</span></div>
-    </div>
+    <button class="on" onclick="setControl(true)">ON</button>
+    <button class="off" onclick="setControl(false)">OFF</button>
+
+    <div>狀態：<span id="controlState">--</span></div>
 
 </div>
 
@@ -142,10 +131,10 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ✅ 控制開關（寫入Firebase）
-async function setSwitch(num, state) {
+// ✅ control 寫入 Firebase
+async function setControl(state) {
     try {
-        const url = `https://removewesh-default-rtdb.firebaseio.com/switch${num}.json`;
+        const url = "https://removewesh-default-rtdb.firebaseio.com/control.json";
 
         await fetch(url, {
             method: "PUT",
@@ -153,11 +142,11 @@ async function setSwitch(num, state) {
         });
 
     } catch (err) {
-        console.error("開關錯誤:", err);
+        console.error("control錯誤:", err);
     }
 }
 
-// ✅ 讀資料
+// ✅ 更新資料
 async function update() {
     try {
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
@@ -180,12 +169,9 @@ async function update() {
         document.getElementById("hum").innerText = hum + "%";
         document.getElementById("ash").innerText = ash ?? "--";
 
-        // 開關狀態
-        document.getElementById("switchState1").innerText =
-            data.switch1 ? "ON" : "OFF";
-
-        document.getElementById("switchState2").innerText =
-            data.switch2 ? "ON" : "OFF";
+        // 🔥 control 狀態
+        document.getElementById("controlState").innerText =
+            data.control ? "ON" : "OFF";
 
         // 圖表
         const time = new Date().toLocaleTimeString();
