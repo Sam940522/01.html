@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Firebase 監控</title>
+<title>ESP32 Firebase 監控系統</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -57,7 +57,6 @@ body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
 }
 
 .on { background: #00c853; color: white; }
@@ -99,7 +98,7 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- 🔥 control -->
+<!-- 控制 -->
 <div class="control-box">
 
     <h3>控制開關</h3>
@@ -133,51 +132,37 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ===== control 寫入 Firebase =====
+// ===== 控制 Firebase =====
 async function setControl(state) {
-    try {
-        const url = "https://removewesh-default-rtdb.firebaseio.com/control.json";
-
-        await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(state)
-        });
-
-    } catch (err) {
-        console.error("control錯誤:", err);
-    }
+    await fetch("https://removewesh-default-rtdb.firebaseio.com/control.json", {
+        method: "PUT",
+        body: JSON.stringify(state)
+    });
 }
 
-// ===== 讀取 Firebase =====
+// ===== 更新資料 =====
 async function update() {
     try {
-        const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
-        const res = await fetch(url);
+        const res = await fetch("https://removewesh-default-rtdb.firebaseio.com/.json");
         const data = await res.json();
 
-        if (!data || !data.sensor) {
-            document.getElementById("status").innerText = "無資料";
-            return;
-        }
+        if (!data || !data.sensor) return;
 
-        // sensor
-        const temp = data.sensor.temperature;
-        const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
+        const t = data.sensor.temperature;
+        const h = data.sensor.humidity;
+        const a = data.sensor.ash;
 
-        document.getElementById("temp").innerText = temp + "°C";
-        document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash ?? "--";
+        document.getElementById("temp").innerText = t + "°C";
+        document.getElementById("hum").innerText = h + "%";
+        document.getElementById("ash").innerText = a;
 
-        // control 狀態
         document.getElementById("controlState").innerText =
             data.control ? "ON" : "OFF";
 
-        // chart
         const time = new Date().toLocaleTimeString();
 
         dataChart.labels.push(time);
-        dataChart.datasets[0].data.push(temp);
+        dataChart.datasets[0].data.push(t);
 
         if (dataChart.labels.length > 6) {
             dataChart.labels.shift();
@@ -188,8 +173,7 @@ async function update() {
 
         document.getElementById("status").innerText = "已連線";
 
-    } catch (err) {
-        console.error(err);
+    } catch (e) {
         document.getElementById("status").innerText = "連線失敗";
     }
 }
