@@ -38,10 +38,12 @@ body {
 .temp { background: linear-gradient(#ff9966, #ff5e62); }
 .ash { background: linear-gradient(#00c853, #009624); }
 
-.value { font-size: 50px; }
+.value {
+    font-size: 50px;
+}
 
-/* 🔥 control 開關 */
-.switch-box {
+/* control */
+.control-box {
     position: fixed;
     bottom: 60px;
     left: 50%;
@@ -49,7 +51,7 @@ body {
     text-align: center;
 }
 
-.switch-box button {
+.control-box button {
     padding: 10px 25px;
     margin: 5px;
     border: none;
@@ -97,8 +99,8 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- ✅ control 開關 -->
-<div class="switch-box">
+<!-- 🔥 control -->
+<div class="control-box">
 
     <h3>控制開關</h3>
 
@@ -131,7 +133,7 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ✅ control 寫入 Firebase
+// ===== control 寫入 Firebase =====
 async function setControl(state) {
     try {
         const url = "https://removewesh-default-rtdb.firebaseio.com/control.json";
@@ -146,21 +148,19 @@ async function setControl(state) {
     }
 }
 
-// ✅ 更新資料
+// ===== 讀取 Firebase =====
 async function update() {
     try {
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log(data);
-
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
         }
 
-        // 感測
+        // sensor
         const temp = data.sensor.temperature;
         const hum = data.sensor.humidity;
         const ash = data.sensor.ash;
@@ -169,11 +169,11 @@ async function update() {
         document.getElementById("hum").innerText = hum + "%";
         document.getElementById("ash").innerText = ash ?? "--";
 
-        // 🔥 control 狀態
+        // control 狀態
         document.getElementById("controlState").innerText =
             data.control ? "ON" : "OFF";
 
-        // 圖表
+        // chart
         const time = new Date().toLocaleTimeString();
 
         dataChart.labels.push(time);
