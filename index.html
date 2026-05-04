@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Firebase 監控系統</title>
+<title>ESP32 Firebase 監控</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,7 +15,6 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右 */
 .left, .right {
     width: 50%;
     display: flex;
@@ -24,7 +23,6 @@ body {
     align-items: center;
 }
 
-/* 卡片 */
 .box {
     width: 60%;
     padding: 20px;
@@ -38,11 +36,8 @@ body {
 .temp { background: linear-gradient(#ff9966, #ff5e62); }
 .ash { background: linear-gradient(#00c853, #009624); }
 
-.value {
-    font-size: 50px;
-}
+.value { font-size: 50px; }
 
-/* control */
 .control-box {
     position: fixed;
     bottom: 60px;
@@ -62,7 +57,6 @@ body {
 .on { background: #00c853; color: white; }
 .off { background: #ff5252; color: white; }
 
-/* 狀態 */
 .status {
     position: fixed;
     bottom: 10px;
@@ -98,7 +92,7 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- 控制 -->
+<!-- control -->
 <div class="control-box">
 
     <h3>控制開關</h3>
@@ -132,15 +126,18 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ===== 控制 Firebase =====
+// ===== 寫 control（一定是 boolean）=====
 async function setControl(state) {
     await fetch("https://removewesh-default-rtdb.firebaseio.com/control.json", {
         method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(state)
     });
 }
 
-// ===== 更新資料 =====
+// ===== 讀 Firebase =====
 async function update() {
     try {
         const res = await fetch("https://removewesh-default-rtdb.firebaseio.com/.json");
@@ -156,8 +153,11 @@ async function update() {
         document.getElementById("hum").innerText = h + "%";
         document.getElementById("ash").innerText = a;
 
+        // 🔥 control 防呆（true / false 都支援）
+        const ctrl = data.control;
+
         document.getElementById("controlState").innerText =
-            data.control ? "ON" : "OFF";
+            (ctrl === true || ctrl === "ON") ? "ON" : "OFF";
 
         const time = new Date().toLocaleTimeString();
 
