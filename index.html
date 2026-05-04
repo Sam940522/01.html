@@ -15,30 +15,17 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右區 */
+/* 左右區塊 */
 .left, .right {
     width: 50%;
-}
-
-/* 左邊 */
-.left {
-    position: relative;          /* 🔥 給開關定位用 */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding-top: 30px;
-}
-
-/* 感測集中 */
-.sensor-group {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    justify-content: space-evenly;
     align-items: center;
 }
 
 /* 卡片 */
-.box {
+.left .box {
     width: 60%;
     padding: 20px;
     border-radius: 10px;
@@ -47,53 +34,31 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-.hum { background: linear-gradient(#4facfe, #00f2fe); }
-.temp { background: linear-gradient(#ff9966, #ff5e62); }
-.ash { background: linear-gradient(#00c853, #009624); }
+/* 濕度 */
+.hum {
+    background: linear-gradient(#4facfe, #00f2fe);
+}
+
+/* 溫度 */
+.temp {
+    background: linear-gradient(#ff9966, #ff5e62);
+}
+
+/* 灰塵 */
+.ash {
+    background: linear-gradient(#00c853, #009624);
+}
 
 .value {
     font-size: 50px;
 }
 
-/* 🔥 開關固定左下 */
-.switch-box {
-    position: absolute;
-    bottom: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-}
-
-/* 開關 */
-.switch-item {
-    text-align: center;
-}
-
-.switch-item button {
-    padding: 8px 14px;
-    margin: 4px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.on { background: #00c853; color: white; }
-.off { background: #ff5252; color: white; }
-
-/* 右邊 */
-.right {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* 狀態 */
 .status {
     position: fixed;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+    color: #333;
 }
 </style>
 </head>
@@ -101,46 +66,20 @@ body {
 <body>
 
 <div class="left">
-
-    <!-- 🔥 三個框集中 -->
-    <div class="sensor-group">
-
-        <div class="box hum">
-            <h2>濕度</h2>
-            <div class="value" id="hum">--</div>
-        </div>
-
-        <div class="box temp">
-            <h2>溫度</h2>
-            <div class="value" id="temp">--</div>
-        </div>
-
-        <div class="box ash">
-            <h2>灰塵濃度</h2>
-            <div class="value" id="ash">--</div>
-        </div>
-
+    <div class="box hum">
+        <h2>濕度</h2>
+        <div class="value" id="hum">--</div>
     </div>
 
-    <!-- 🔥 左下開關 -->
-    <div class="switch-box">
-
-        <div class="switch-item">
-            <div>開關1</div>
-            <button class="on" onclick="setSwitch(1,true)">ON</button>
-            <button class="off" onclick="setSwitch(1,false)">OFF</button>
-            <div id="switchState1">--</div>
-        </div>
-
-        <div class="switch-item">
-            <div>開關2</div>
-            <button class="on" onclick="setSwitch(2,true)">ON</button>
-            <button class="off" onclick="setSwitch(2,false)">OFF</button>
-            <div id="switchState2">--</div>
-        </div>
-
+    <div class="box temp">
+        <h2>溫度</h2>
+        <div class="value" id="temp">--</div>
     </div>
 
+    <div class="box ash">
+        <h2>灰塵濃度</h2>
+        <div class="value" id="ash">--</div>
+    </div>
 </div>
 
 <div class="right">
@@ -170,49 +109,28 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ✅ 寫入開關
-async function setSwitch(num, state) {
-    try {
-        const url = `https://removewesh-default-rtdb.firebaseio.com/switch${num}.json`;
-
-        await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(state)
-        });
-
-    } catch (err) {
-        console.error("開關錯誤:", err);
-    }
-}
-
-// ✅ 更新資料
 async function update() {
     try {
+        // Firebase URL（一定要 .json）
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
         const res = await fetch(url);
         const data = await res.json();
+
+        console.log("Firebase資料:", data);
 
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
         }
 
-        const temp = data.sensor.temperature ?? "--";
-        const hum = data.sensor.humidity ?? "--";
-        const ash = data.sensor.ash ?? "--";
+        const temp = data.sensor.temperature;
+        const hum = data.sensor.humidity;
+        const ash = data.sensor.ash;
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash;
+        document.getElementById("ash").innerText = ash ?? "--";
 
-        // 開關狀態同步
-        document.getElementById("switchState1").innerText =
-            data.switch1 ? "ON" : "OFF";
-
-        document.getElementById("switchState2").innerText =
-            data.switch2 ? "ON" : "OFF";
-
-        // 圖表
         const time = new Date().toLocaleTimeString();
 
         dataChart.labels.push(time);
@@ -224,10 +142,10 @@ async function update() {
         }
 
         chart.update();
-
         document.getElementById("status").innerText = "已連線";
 
     } catch (err) {
+        console.error("錯誤:", err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
