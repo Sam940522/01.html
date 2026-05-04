@@ -15,18 +15,26 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右 */
+/* 左右區 */
 .left, .right {
     width: 50%;
+}
+
+/* 左邊 */
+.left {
+    position: relative;          /* 🔥 給開關定位用 */
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-top: 30px;
 }
 
-/* 左邊內容 */
-.left {
-    justify-content: space-between;
-    padding: 20px 0;
+/* 感測集中 */
+.sensor-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
 }
 
 /* 卡片 */
@@ -43,15 +51,20 @@ body {
 .temp { background: linear-gradient(#ff9966, #ff5e62); }
 .ash { background: linear-gradient(#00c853, #009624); }
 
-.value { font-size: 50px; }
+.value {
+    font-size: 50px;
+}
 
-/* 🔥 開關在左下 */
+/* 🔥 開關固定左下 */
 .switch-box {
-    width: 60%;
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
     display: flex;
     justify-content: space-around;
 }
 
+/* 開關 */
 .switch-item {
     text-align: center;
 }
@@ -67,6 +80,14 @@ body {
 .on { background: #00c853; color: white; }
 .off { background: #ff5252; color: white; }
 
+/* 右邊 */
+.right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 /* 狀態 */
 .status {
     position: fixed;
@@ -81,23 +102,27 @@ body {
 
 <div class="left">
 
-    <!-- 感測 -->
-    <div class="box hum">
-        <h2>濕度</h2>
-        <div class="value" id="hum">--</div>
+    <!-- 🔥 三個框集中 -->
+    <div class="sensor-group">
+
+        <div class="box hum">
+            <h2>濕度</h2>
+            <div class="value" id="hum">--</div>
+        </div>
+
+        <div class="box temp">
+            <h2>溫度</h2>
+            <div class="value" id="temp">--</div>
+        </div>
+
+        <div class="box ash">
+            <h2>灰塵濃度</h2>
+            <div class="value" id="ash">--</div>
+        </div>
+
     </div>
 
-    <div class="box temp">
-        <h2>溫度</h2>
-        <div class="value" id="temp">--</div>
-    </div>
-
-    <div class="box ash">
-        <h2>灰塵濃度</h2>
-        <div class="value" id="ash">--</div>
-    </div>
-
-    <!-- ✅ 開關放最下面 -->
+    <!-- 🔥 左下開關 -->
     <div class="switch-box">
 
         <div class="switch-item">
@@ -145,7 +170,7 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ✅ 控制開關（寫入 Firebase）
+// ✅ 寫入開關
 async function setSwitch(num, state) {
     try {
         const url = `https://removewesh-default-rtdb.firebaseio.com/switch${num}.json`;
@@ -156,7 +181,7 @@ async function setSwitch(num, state) {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("開關錯誤:", err);
     }
 }
 
@@ -180,7 +205,7 @@ async function update() {
         document.getElementById("hum").innerText = hum + "%";
         document.getElementById("ash").innerText = ash;
 
-        // 🔥 顯示開關狀態
+        // 開關狀態同步
         document.getElementById("switchState1").innerText =
             data.switch1 ? "ON" : "OFF";
 
