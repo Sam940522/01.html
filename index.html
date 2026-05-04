@@ -92,10 +92,9 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- control -->
 <div class="control-box">
 
-    <h3>控制開關</h3>
+    <h3>風扇控制</h3>
 
     <button class="on" onclick="setControl(true)">ON</button>
     <button class="off" onclick="setControl(false)">OFF</button>
@@ -126,18 +125,21 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ===== 寫 control（一定是 boolean）=====
+// ✅ 正確控制 fan（字串 ON / OFF）
 async function setControl(state) {
+
+    const value = state ? "ON" : "OFF";
+
     await fetch("https://removewesh-default-rtdb.firebaseio.com/control.json", {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(state)
+        body: JSON.stringify({ fan: value })
     });
 }
 
-// ===== 讀 Firebase =====
+// 讀 Firebase
 async function update() {
     try {
         const res = await fetch("https://removewesh-default-rtdb.firebaseio.com/.json");
@@ -153,11 +155,10 @@ async function update() {
         document.getElementById("hum").innerText = h + "%";
         document.getElementById("ash").innerText = a;
 
-        // 🔥 control 防呆（true / false 都支援）
-        const ctrl = data.control;
+        // ✅ 修正 control 讀取方式
+        const fan = data.control?.fan || "OFF";
 
-        document.getElementById("controlState").innerText =
-            (ctrl === true || ctrl === "ON") ? "ON" : "OFF";
+        document.getElementById("controlState").innerText = fan;
 
         const time = new Date().toLocaleTimeString();
 
