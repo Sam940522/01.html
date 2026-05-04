@@ -111,7 +111,6 @@ const chart = new Chart(ctx, {
 
 async function update() {
     try {
-        // Firebase URL（一定要 .json）
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
         const res = await fetch(url);
         const data = await res.json();
