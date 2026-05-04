@@ -40,37 +40,13 @@ body {
 
 .value { font-size: 50px; }
 
-/* 開關 */
-.switch-box {
-    position: fixed;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 40px;
-}
-
-.switch-item {
-    text-align: center;
-}
-
-.switch-item button {
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.on { background: #00c853; color: white; }
-.off { background: #ff5252; color: white; }
-
 /* 狀態 */
 .status {
     position: fixed;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+    color: #333;
 }
 </style>
 </head>
@@ -101,25 +77,6 @@ body {
     <canvas id="chart"></canvas>
 </div>
 
-<!-- ✅ 兩個開關 -->
-<div class="switch-box">
-
-    <div class="switch-item">
-        <h3>開關1</h3>
-        <button class="on" onclick="setSwitch(1,true)">ON</button>
-        <button class="off" onclick="setSwitch(1,false)">OFF</button>
-        <div>狀態：<span id="switchState1">--</span></div>
-    </div>
-
-    <div class="switch-item">
-        <h3>開關2</h3>
-        <button class="on" onclick="setSwitch(2,true)">ON</button>
-        <button class="off" onclick="setSwitch(2,false)">OFF</button>
-        <div>狀態：<span id="switchState2">--</span></div>
-    </div>
-
-</div>
-
 <div class="status" id="status">初始化...</div>
 
 <script>
@@ -142,50 +99,28 @@ const chart = new Chart(ctx, {
     data: dataChart
 });
 
-// ✅ 控制開關（寫入Firebase）
-async function setSwitch(num, state) {
-    try {
-        const url = `https://removewesh-default-rtdb.firebaseio.com/switch${num}.json`;
-
-        await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(state)
-        });
-
-    } catch (err) {
-        console.error("開關錯誤:", err);
-    }
-}
-
-// ✅ 讀資料
 async function update() {
     try {
         const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
+
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log(data);
+        console.log("Firebase資料:", data);
 
+        // 防呆
         if (!data || !data.sensor) {
             document.getElementById("status").innerText = "無資料";
             return;
         }
 
-        // 感測
-        const temp = data.sensor.temperature;
-        const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
+        const temp = data.sensor.temperature ?? "--";
+        const hum = data.sensor.humidity ?? "--";
+        const ash = data.sensor.ash ?? "--";
 
         document.getElementById("temp").innerText = temp + "°C";
         document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash ?? "--";
-
-        // 開關狀態
-        document.getElementById("switchState1").innerText =
-            data.switch1 ? "ON" : "OFF";
-
-        document.getElementById("switchState2").innerText =
-            data.switch2 ? "ON" : "OFF";
+        document.getElementById("ash").innerText = ash;
 
         // 圖表
         const time = new Date().toLocaleTimeString();
@@ -203,7 +138,7 @@ async function update() {
         document.getElementById("status").innerText = "已連線";
 
     } catch (err) {
-        console.error(err);
+        console.error("錯誤:", err);
         document.getElementById("status").innerText = "連線失敗";
     }
 }
