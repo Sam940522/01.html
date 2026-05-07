@@ -204,8 +204,8 @@ async function update() {
         chart.update();
 
         if (data.control) {
-            document.getElementById("fan1").checked = data.control.fan1 === "ON";
-            document.getElementById("fan2").checked = data.control.fan2 === "ON";
+            document.getElementById("fan1").checked = data.control.fan1 === "1";
+            document.getElementById("fan2").checked = data.control.fan2 === "1";
         }
 
         document.getElementById("status").innerText = "已連線";
@@ -217,7 +217,7 @@ async function update() {
 
 async function toggleFan(name) {
     const el = document.getElementById(name);
-    const state = el.checked ? "ON" : "OFF";
+    const state = el.checked ? "1" : "0";
 
     await fetch(baseURL + "/control/" + name + ".json", {
         method: "PUT",
