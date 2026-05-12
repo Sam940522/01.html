@@ -23,7 +23,7 @@ body {
     align-items: center;
 }
 
-/* 感測器卡片 */
+/* 卡片 */
 .left .box {
     width: 60%;
     padding: 20px;
@@ -31,6 +31,12 @@ body {
     text-align: center;
     color: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.left .box:hover {
+    transform: scale(1.03);
 }
 
 .hum { background: linear-gradient(#4facfe, #00f2fe); }
@@ -39,7 +45,7 @@ body {
 
 .value { font-size: 50px; }
 
-/* 🔥 獨立控制區 */
+/* 控制區 */
 .controlBox {
     width: 60%;
     padding: 20px;
@@ -53,7 +59,6 @@ body {
     margin-top: 10px;
     display: flex;
     justify-content: space-around;
-    align-items: center;
 }
 
 /* switch */
@@ -100,31 +105,31 @@ input:checked + .slider:before {
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    color: #333;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 左側 -->
 <div class="left">
 
-    <div class="box hum">
+    <div class="box hum" onclick="showChart('hum')">
         <h2>濕度</h2>
         <div class="value" id="hum">--</div>
     </div>
 
-    <div class="box temp">
+    <div class="box temp" onclick="showChart('temp')">
         <h2>溫度</h2>
         <div class="value" id="temp">--</div>
     </div>
 
-    <div class="box ash">
+    <div class="box ash" onclick="showChart('ash')">
         <h2>灰塵濃度</h2>
         <div class="value" id="ash">--</div>
     </div>
 
-    <!-- 🔥 獨立控制區 -->
+    <!-- 控制 -->
     <div class="controlBox">
         <h3>Fan Control</h3>
 
@@ -149,35 +154,77 @@ input:checked + .slider:before {
 
 </div>
 
+<!-- 右側 -->
 <div class="right">
-    <h2>溫度趨勢</h2>
+    <h2 id="chartTitle">溫度趨勢</h2>
     <canvas id="chart"></canvas>
 </div>
 
 <div class="status" id="status">初始化...</div>
 
 <script>
-const ctx = document.getElementById("chart").getContext("2d");
-
-const dataChart = {
-    labels: [],
-    datasets: [{
-        label: "溫度",
-        data: [],
-        borderColor: "red",
-        borderWidth: 2,
-        fill: false,
-        tension: 0.3
-    }]
-};
-
-const chart = new Chart(ctx, {
-    type: "line",
-    data: dataChart
-});
 
 const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
 
+let currentType = "temp";
+
+/* 🔥 三種資料永遠同步更新 */
+const dataStore = {
+    temp: { labels: [], data: [] },
+    hum:  { labels: [], data: [] },
+    ash:  { labels: [], data: [] }
+};
+
+/* Chart */
+const ctx = document.getElementById("chart").getContext("2d");
+
+const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            borderColor: "red",
+            borderWidth: 2,
+            fill: false,
+            tension: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        animation: false,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+
+/* 切換顯示（只換視角） */
+function showChart(type) {
+    currentType = type;
+
+    if (type === "temp") {
+        document.getElementById("chartTitle").innerText = "溫度趨勢";
+        chart.data.datasets[0].borderColor = "red";
+    }
+
+    if (type === "hum") {
+        document.getElementById("chartTitle").innerText = "濕度趨勢";
+        chart.data.datasets[0].borderColor = "blue";
+    }
+
+    if (type === "ash") {
+        document.getElementById("chartTitle").innerText = "灰塵趨勢";
+        chart.data.datasets[0].borderColor = "green";
+    }
+
+    chart.data.labels = dataStore[type].labels;
+    chart.data.datasets[0].data = dataStore[type].data;
+
+    chart.update();
+}
+
+/* 🔥 更新資料（核心修正） */
 async function update() {
     try {
         const res = await fetch(baseURL + "/.json");
@@ -193,13 +240,27 @@ async function update() {
 
         const time = new Date().toLocaleTimeString();
 
-        dataChart.labels.push(time);
-        dataChart.datasets[0].data.push(s.temperature);
+        /* 🔥 三種資料全部同步記錄（重點） */
+        dataStore.temp.labels.push(time);
+        dataStore.temp.data.push(s.temperature);
 
-        if (dataChart.labels.length > 6) {
-            dataChart.labels.shift();
-            dataChart.datasets[0].data.shift();
-        }
+        dataStore.hum.labels.push(time);
+        dataStore.hum.data.push(s.humidity);
+
+        dataStore.ash.labels.push(time);
+        dataStore.ash.data.push(s.ash ?? 0);
+
+        /* 限制長度 */
+        ["temp", "hum", "ash"].forEach(type => {
+            if (dataStore[type].labels.length > 10) {
+                dataStore[type].labels.shift();
+                dataStore[type].data.shift();
+            }
+        });
+
+        /* 更新畫面 */
+        chart.data.labels = dataStore[currentType].labels;
+        chart.data.datasets[0].data = dataStore[currentType].data;
 
         chart.update();
 
@@ -215,6 +276,7 @@ async function update() {
     }
 }
 
+/* Fan 控制 */
 async function toggleFan(name) {
     const el = document.getElementById(name);
     const state = el.checked ? "1" : "0";
@@ -227,6 +289,7 @@ async function toggleFan(name) {
 
 update();
 setInterval(update, 2000);
+
 </script>
 
 </body>
