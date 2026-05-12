@@ -9,12 +9,14 @@
 <style>
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: "Segoe UI", Arial;
     height: 100vh;
     display: flex;
-    background: linear-gradient(#e6f4ff, #d9f1ff);
+    background: radial-gradient(circle at top, #1c2b3a, #0b1220);
+    color: white;
 }
 
+/* 左右分區 */
 .left, .right {
     width: 50%;
     display: flex;
@@ -23,45 +25,57 @@ body {
     align-items: center;
 }
 
-/* 卡片 */
+/* ===== 卡片 ===== */
 .left .box {
-    width: 60%;
+    width: 65%;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 16px;
     text-align: center;
     color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.3s;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
 }
 
-.left .box:hover {
-    transform: scale(1.03);
+.hum {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
 }
 
-.hum { background: linear-gradient(#4facfe, #00f2fe); }
-.temp { background: linear-gradient(#ff9966, #ff5e62); }
-.ash { background: linear-gradient(#00c853, #009624); }
+.temp {
+    background: linear-gradient(135deg, #ff512f, #dd2476);
+}
 
-.value { font-size: 50px; }
+.ash {
+    background: linear-gradient(135deg, #00b09b, #96c93d);
+}
 
-/* 控制區 */
+.value {
+    font-size: 54px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* ===== 控制面板 ===== */
 .controlBox {
-    width: 60%;
+    width: 65%;
     padding: 20px;
-    border-radius: 10px;
-    background: white;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
 .switchGroup {
-    margin-top: 10px;
+    margin-top: 15px;
     display: flex;
     justify-content: space-around;
 }
 
-/* switch */
+/* ===== switch ===== */
 .switch {
   position: relative;
   display: inline-block;
@@ -74,44 +88,58 @@ body {
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
+  inset: 0;
+  background: #333;
   border-radius: 34px;
+  transition: 0.3s;
 }
 
 .slider:before {
-  position: absolute;
   content: "";
+  position: absolute;
   height: 26px;
   width: 26px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
-  transition: .4s;
+  background: white;
   border-radius: 50%;
+  transition: 0.3s;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+    background: #2196F3;
 }
 
 input:checked + .slider:before {
   transform: translateX(26px);
 }
 
+/* ===== 右側圖表 ===== */
+.right {
+    background: rgba(255,255,255,0.03);
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+.right h2 {
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    color: #00e5ff;
+}
+
+/* status */
 .status {
     position: fixed;
-    bottom: 10px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
+    font-size: 14px;
+    color: #aaa;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 左側 -->
 <div class="left">
 
     <div class="box hum" onclick="showChart('hum')">
@@ -129,7 +157,6 @@ input:checked + .slider:before {
         <div class="value" id="ash">--</div>
     </div>
 
-    <!-- 控制 -->
     <div class="controlBox">
         <h3>模組開關控制</h3>
 
@@ -154,13 +181,12 @@ input:checked + .slider:before {
 
 </div>
 
-<!-- 右側 -->
 <div class="right">
     <h2 id="chartTitle">溫度變化圖</h2>
     <canvas id="chart"></canvas>
 </div>
 
-<div class="status" id="status">初始化...</div>
+<div class="status" id="status">初始化</div>
 
 <script>
 
@@ -168,14 +194,12 @@ const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
 
 let currentType = "temp";
 
-/* 🔥 三種資料永遠同步更新 */
 const dataStore = {
     temp: { labels: [], data: [] },
     hum:  { labels: [], data: [] },
     ash:  { labels: [], data: [] }
 };
 
-/* Chart */
 const ctx = document.getElementById("chart").getContext("2d");
 
 const chart = new Chart(ctx, {
@@ -184,7 +208,7 @@ const chart = new Chart(ctx, {
         labels: [],
         datasets: [{
             data: [],
-            borderColor: "red",
+            borderColor: "#00e5ff",
             borderWidth: 2,
             fill: false,
             tension: 0
@@ -193,30 +217,31 @@ const chart = new Chart(ctx, {
     options: {
         responsive: true,
         animation: false,
-        plugins: {
-            legend: { display: false }
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: "#aaa" } },
+            y: { ticks: { color: "#aaa" } }
         }
     }
 });
 
-/* 切換顯示（只換視角） */
 function showChart(type) {
     currentType = type;
 
-    if (type === "temp") {
-        document.getElementById("chartTitle").innerText = "溫度變化圖";
-        chart.data.datasets[0].borderColor = "red";
-    }
+    const titleMap = {
+        temp: "溫度變化圖",
+        hum: "濕度變化圖",
+        ash: "灰塵密度變化圖"
+    };
 
-    if (type === "hum") {
-        document.getElementById("chartTitle").innerText = "濕度變化圖";
-        chart.data.datasets[0].borderColor = "blue";
-    }
+    const colorMap = {
+        temp: "#ff4d4d",
+        hum: "#00c6ff",
+        ash: "#00ff88"
+    };
 
-    if (type === "ash") {
-        document.getElementById("chartTitle").innerText = "灰塵密度變化圖";
-        chart.data.datasets[0].borderColor = "green";
-    }
+    document.getElementById("chartTitle").innerText = titleMap[type];
+    chart.data.datasets[0].borderColor = colorMap[type];
 
     chart.data.labels = dataStore[type].labels;
     chart.data.datasets[0].data = dataStore[type].data;
@@ -224,7 +249,6 @@ function showChart(type) {
     chart.update();
 }
 
-/* 🔥 更新資料（核心修正） */
 async function update() {
     try {
         const res = await fetch(baseURL + "/.json");
@@ -240,7 +264,6 @@ async function update() {
 
         const time = new Date().toLocaleTimeString();
 
-        /* 🔥 三種資料全部同步記錄（重點） */
         dataStore.temp.labels.push(time);
         dataStore.temp.data.push(s.temperature);
 
@@ -250,18 +273,15 @@ async function update() {
         dataStore.ash.labels.push(time);
         dataStore.ash.data.push(s.ash ?? 0);
 
-        /* 限制長度 */
-        ["temp", "hum", "ash"].forEach(type => {
-            if (dataStore[type].labels.length > 10) {
-                dataStore[type].labels.shift();
-                dataStore[type].data.shift();
+        ["temp","hum","ash"].forEach(t=>{
+            if(dataStore[t].labels.length>10){
+                dataStore[t].labels.shift();
+                dataStore[t].data.shift();
             }
         });
 
-        /* 更新畫面 */
         chart.data.labels = dataStore[currentType].labels;
         chart.data.datasets[0].data = dataStore[currentType].data;
-
         chart.update();
 
         if (data.control) {
@@ -276,7 +296,6 @@ async function update() {
     }
 }
 
-/* Fan 控制 */
 async function toggleFan(name) {
     const el = document.getElementById(name);
     const state = el.checked ? "1" : "0";
