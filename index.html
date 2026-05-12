@@ -156,7 +156,7 @@ input:checked + .slider:before {
 
 <!-- 右側 -->
 <div class="right">
-    <h2 id="chartTitle">溫度趨勢</h2>
+    <h2 id="chartTitle">溫度變化圖</h2>
     <canvas id="chart"></canvas>
 </div>
 
@@ -204,17 +204,17 @@ function showChart(type) {
     currentType = type;
 
     if (type === "temp") {
-        document.getElementById("chartTitle").innerText = "溫度趨勢";
+        document.getElementById("chartTitle").innerText = "溫度變化圖";
         chart.data.datasets[0].borderColor = "red";
     }
 
     if (type === "hum") {
-        document.getElementById("chartTitle").innerText = "濕度趨勢";
+        document.getElementById("chartTitle").innerText = "濕度變化圖";
         chart.data.datasets[0].borderColor = "blue";
     }
 
     if (type === "ash") {
-        document.getElementById("chartTitle").innerText = "灰塵趨勢";
+        document.getElementById("chartTitle").innerText = "灰塵密度變化圖";
         chart.data.datasets[0].borderColor = "green";
     }
 
