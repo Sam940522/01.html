@@ -15,7 +15,6 @@ body {
     background: linear-gradient(#e6f4ff, #d9f1ff);
 }
 
-/* 左右區塊 */
 .left, .right {
     width: 50%;
     display: flex;
@@ -32,25 +31,73 @@ body {
     text-align: center;
     color: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-/* 濕度 */
-.hum {
-    background: linear-gradient(#4facfe, #00f2fe);
+.left .box:hover {
+    transform: scale(1.03);
 }
 
-/* 溫度 */
-.temp {
-    background: linear-gradient(#ff9966, #ff5e62);
+.hum { background: linear-gradient(#4facfe, #00f2fe); }
+.temp { background: linear-gradient(#ff9966, #ff5e62); }
+.ash { background: linear-gradient(#00c853, #009624); }
+
+.value { font-size: 50px; }
+
+/* 控制區 */
+.controlBox {
+    width: 60%;
+    padding: 20px;
+    border-radius: 10px;
+    background: white;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* 灰塵 */
-.ash {
-    background: linear-gradient(#00c853, #009624);
+.switchGroup {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-around;
 }
 
-.value {
-    font-size: 50px;
+/* switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { display:none; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
 }
 
 .status {
@@ -58,102 +105,191 @@ body {
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    color: #333;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 左側 -->
 <div class="left">
 
-    <div class="box hum">
+    <div class="box hum" onclick="showChart('hum')">
         <h2>濕度</h2>
         <div class="value" id="hum">--</div>
     </div>
 
-    <div class="box temp">
+    <div class="box temp" onclick="showChart('temp')">
         <h2>溫度</h2>
         <div class="value" id="temp">--</div>
     </div>
 
-    <div class="box ash">
+    <div class="box ash" onclick="showChart('ash')">
         <h2>灰塵濃度</h2>
         <div class="value" id="ash">--</div>
     </div>
 
+    <!-- 控制 -->
+    <div class="controlBox">
+        <h3>Fan Control</h3>
+
+        <div class="switchGroup">
+            <div>
+                <label class="switch">
+                  <input type="checkbox" id="fan1" onchange="toggleFan('fan1')">
+                  <span class="slider"></span>
+                </label>
+                <div>Fan 1</div>
+            </div>
+
+            <div>
+                <label class="switch">
+                  <input type="checkbox" id="fan2" onchange="toggleFan('fan2')">
+                  <span class="slider"></span>
+                </label>
+                <div>Fan 2</div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+<!-- 右側 -->
 <div class="right">
-    <h2>溫度趨勢</h2>
+    <h2 id="chartTitle">溫度變化圖</h2>
     <canvas id="chart"></canvas>
 </div>
 
 <div class="status" id="status">初始化...</div>
 
 <script>
-const ctx = document.getElementById("chart").getContext("2d");
 
-const dataChart = {
-    labels: [],
-    datasets: [{
-        label: "溫度",
-        data: [],
-        borderColor: "red",
-        borderWidth: 2,
-        fill: false,
-        tension: 0.3
-    }]
+const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
+
+let currentType = "temp";
+
+/* 🔥 三種資料永遠同步更新 */
+const dataStore = {
+    temp: { labels: [], data: [] },
+    hum:  { labels: [], data: [] },
+    ash:  { labels: [], data: [] }
 };
+
+/* Chart */
+const ctx = document.getElementById("chart").getContext("2d");
 
 const chart = new Chart(ctx, {
     type: "line",
-    data: dataChart
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            borderColor: "red",
+            borderWidth: 2,
+            fill: false,
+            tension: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        animation: false,
+        plugins: {
+            legend: { display: false }
+        }
+    }
 });
 
+/* 切換顯示（只換視角） */
+function showChart(type) {
+    currentType = type;
+
+    if (type === "temp") {
+        document.getElementById("chartTitle").innerText = "溫度變化圖";
+        chart.data.datasets[0].borderColor = "red";
+    }
+
+    if (type === "hum") {
+        document.getElementById("chartTitle").innerText = "濕度變化圖";
+        chart.data.datasets[0].borderColor = "blue";
+    }
+
+    if (type === "ash") {
+        document.getElementById("chartTitle").innerText = "灰塵密度變化圖";
+        chart.data.datasets[0].borderColor = "green";
+    }
+
+    chart.data.labels = dataStore[type].labels;
+    chart.data.datasets[0].data = dataStore[type].data;
+
+    chart.update();
+}
+
+/* 🔥 更新資料（核心修正） */
 async function update() {
     try {
-        const url = "https://removewesh-default-rtdb.firebaseio.com/.json";
-        const res = await fetch(url);
+        const res = await fetch(baseURL + "/.json");
         const data = await res.json();
 
-        console.log("Firebase資料:", data);
+        if (!data || !data.sensor) return;
 
-        if (!data || !data.sensor) {
-            document.getElementById("status").innerText = "無資料";
-            return;
-        }
+        const s = data.sensor;
 
-        const temp = data.sensor.temperature;
-        const hum = data.sensor.humidity;
-        const ash = data.sensor.ash;
-
-        document.getElementById("temp").innerText = temp + "°C";
-        document.getElementById("hum").innerText = hum + "%";
-        document.getElementById("ash").innerText = ash ?? "--";
+        document.getElementById("temp").innerText = s.temperature + "°C";
+        document.getElementById("hum").innerText = s.humidity + "%";
+        document.getElementById("ash").innerText = s.ash ?? "--";
 
         const time = new Date().toLocaleTimeString();
 
-        dataChart.labels.push(time);
-        dataChart.datasets[0].data.push(temp);
+        /* 🔥 三種資料全部同步記錄（重點） */
+        dataStore.temp.labels.push(time);
+        dataStore.temp.data.push(s.temperature);
 
-        if (dataChart.labels.length > 6) {
-            dataChart.labels.shift();
-            dataChart.datasets[0].data.shift();
-        }
+        dataStore.hum.labels.push(time);
+        dataStore.hum.data.push(s.humidity);
+
+        dataStore.ash.labels.push(time);
+        dataStore.ash.data.push(s.ash ?? 0);
+
+        /* 限制長度 */
+        ["temp", "hum", "ash"].forEach(type => {
+            if (dataStore[type].labels.length > 10) {
+                dataStore[type].labels.shift();
+                dataStore[type].data.shift();
+            }
+        });
+
+        /* 更新畫面 */
+        chart.data.labels = dataStore[currentType].labels;
+        chart.data.datasets[0].data = dataStore[currentType].data;
 
         chart.update();
 
+        if (data.control) {
+            document.getElementById("fan1").checked = data.control.fan1 === "1";
+            document.getElementById("fan2").checked = data.control.fan2 === "1";
+        }
+
         document.getElementById("status").innerText = "已連線";
 
-    } catch (err) {
-        console.error("錯誤:", err);
+    } catch (e) {
         document.getElementById("status").innerText = "連線失敗";
     }
 }
 
+/* Fan 控制 */
+async function toggleFan(name) {
+    const el = document.getElementById(name);
+    const state = el.checked ? "1" : "0";
+
+    await fetch(baseURL + "/control/" + name + ".json", {
+        method: "PUT",
+        body: JSON.stringify(state)
+    });
+}
+
 update();
 setInterval(update, 2000);
+
 </script>
 
 </body>
