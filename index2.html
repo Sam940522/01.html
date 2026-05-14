@@ -2,292 +2,592 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+
+<!-- 網頁標題 -->
 <title>ESP32 Firebase 監控</title>
 
+<!-- 載入 Chart.js 圖表套件 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+/* 頁面設定 */
 body {
+    /* 外邊距設為 0 */
     margin: 0;
-    font-family: Arial;
+
+    /* 字體 */
+    font-family: "Segoe UI", Arial;
+
+    /* 視窗大小 */
     height: 100vh;
-    display: flex;
-    background: linear-gradient(#e6f4ff, #d9f1ff);
-}
 
-.left, .right {
-    width: 50%;
+    /* 左右排列 */
     display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: center;
-}
 
-/* 卡片 */
-.left .box {
-    width: 60%;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
+    /* 背景顏色 */
+    background: radial-gradient(circle at top, #1c2b3a, #0b1220);
+
+    /* 文字顏色 */
     color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    cursor: pointer;
-    transition: 0.2s;
 }
 
-.left .box:hover {
-    transform: scale(1.03);
+/* 左右區塊 */
+.left, .right { 
+
+    /* 寬度50% */ 
+    width: 50%; 
+
+    display: flex; 
+
+    /* 垂直排列 */ 
+    flex-direction: column; 
+
+    /* 排版平均 */ 
+    justify-content: 
+    space-evenly; 
+
+    /* 水平置中 */ 
+    align-items: 
+
+    center; 
 }
 
-.hum { background: linear-gradient(#4facfe, #00f2fe); }
-.temp { background: linear-gradient(#ff9966, #ff5e62); }
-.ash { background: linear-gradient(#00c853, #009624); }
+/* 感測器介面 */
+.left .box {
 
-.value { font-size: 50px; }
+    /* 寬度65% */
+    width: 65%;
 
-/* 控制區 */
-.controlBox {
-    width: 60%;
+    /* 上下左右留白20px */
     padding: 20px;
-    border-radius: 10px;
-    background: white;
+
+    /* 介面邊框圓角 */
+    border-radius: 16px;
+
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+    color: white;
+
+    /* 介面可點擊 */
+    cursor: pointer;
+
+    /* 變化效果 */  
+    transition: 0.3s;
+
+    /* 陰影 
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);*/
+
+    /* 半透明邊框 
+    border: 1px solid rgba(255,255,255,0.1);*/
+
+    /* 介面背景 */
+    backdrop-filter: blur(8px);
 }
 
-.switchGroup {
+/* 濕度介面顏色 */
+.hum {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+}
+
+/* 溫度介面顏色 */
+.temp {
+    background: linear-gradient(135deg, #ff512f, #dd2476);
+}
+
+/* 灰塵介面顏色 */
+.ash {
+    background: linear-gradient(135deg, #00b09b, #96c93d);
+}
+
+/* 數值字樣 */
+.value {
+    /* 字體大小 */
+    font-size: 54px;
+    /* 字體加粗 */
+    font-weight: bold;
+    /* 內容間距 */
     margin-top: 10px;
+}
+
+/* 模組控制介面 */
+.controlBox {
+    /* 寬度65% */
+    width: 65%;
+    /* 上下左右留白20px */
+    padding: 20px;
+    /* 介面邊框圓角 */
+    border-radius: 16px;
+
+    /* 半透明背景 */
+    background: rgba(255,255,255,0.05);
+    /* 介面邊框圓角 */
+    border: 1px solid rgba(255,255,255,0.1);
+    /* 介面背景 */
+    backdrop-filter: blur(10px);
+    /* 文字置中 */
+    text-align: center;
+    /*
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);*/
+}
+
+/* 模組開關介面配置 */
+.switchGroup {
+    /* 間距15px */
+    margin-top: 15px;
+
     display: flex;
+    /* 開關左右排列 */
     justify-content: space-around;
 }
 
-/* switch */
+/* 模組開關樣式 */
 .switch {
+
   position: relative;
+
   display: inline-block;
+   /* 開關寬度60px */
   width: 60px;
+   /* 開關寬度34px */
   height: 34px;
 }
 
-.switch input { display:none; }
+/* 隱藏原本 checkbox 
+.switch input {
+    display:none;
+}
 
+/* 開關底座 */
 .slider {
+
   position: absolute;
+  /* 開關可點擊 */
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
+
+  inset: 0;
+  /* 背景顏色（深灰） */
+  background: #333;
+  /* 開關邊框圓角 */
   border-radius: 34px;
+  /* 變化效果 */
+  transition: 0.3s;
 }
 
+/* 開關圓球 */
 .slider:before {
-  position: absolute;
+
   content: "";
+
+  position: absolute;
+
   height: 26px;
+
   width: 26px;
+
   left: 4px;
+
   bottom: 4px;
-  background-color: white;
-  transition: .4s;
+
+  background: white;
+
   border-radius: 50%;
+
+  transition: 0.3s;
 }
 
+/* 開啟後背景 */
 input:checked + .slider {
-  background-color: #2196F3;
+    background: #2196F3;
 }
 
+/* 開啟後圓球移動 */
 input:checked + .slider:before {
   transform: translateX(26px);
 }
 
+/* 右側圖表區 */
+.right {
+
+    /* 半透明背景 */
+    background: rgba(255,255,255,0.03);
+
+    /* 左邊分隔線 */
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 圖表標題 */
+.right h2 {
+
+    margin-bottom: 10px;
+
+    letter-spacing: 1px;
+
+    color: #00e5ff;
+}
+
+/* 底部狀態文字 */
 .status {
+
     position: fixed;
-    bottom: 10px;
+
+    bottom: 12px;
+
     left: 50%;
+
     transform: translateX(-50%);
+
+    font-size: 14px;
+
+    color: #aaa;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 左側 -->
+<!-- 左側資料區 -->
 <div class="left">
 
+    <!-- 濕度卡片 -->
     <div class="box hum" onclick="showChart('hum')">
+
         <h2>濕度</h2>
+
+        <!-- 即時濕度 -->
         <div class="value" id="hum">--</div>
     </div>
 
+    <!-- 溫度卡片 -->
     <div class="box temp" onclick="showChart('temp')">
+
         <h2>溫度</h2>
+
+        <!-- 即時溫度 -->
         <div class="value" id="temp">--</div>
     </div>
 
+    <!-- 灰塵卡片 -->
     <div class="box ash" onclick="showChart('ash')">
+
         <h2>灰塵濃度</h2>
+
+        <!-- 即時灰塵數值 -->
         <div class="value" id="ash">--</div>
     </div>
 
-    <!-- 控制 -->
+    <!-- 控制區 -->
     <div class="controlBox">
-        <h3>Fan Control</h3>
+
+        <h3>模組開關控制</h3>
 
         <div class="switchGroup">
+
+            <!-- 進氣模組 -->
             <div>
+
                 <label class="switch">
-                  <input type="checkbox" id="fan1" onchange="toggleFan('fan1')">
+
+                  <input type="checkbox"
+                         id="fan1"
+                         onchange="toggleFan('fan1')">
+
                   <span class="slider"></span>
+
                 </label>
-                <div>Fan 1</div>
+
+                <div>進氣模組</div>
+
             </div>
 
+            <!-- 冷凝模組 -->
             <div>
+
                 <label class="switch">
-                  <input type="checkbox" id="fan2" onchange="toggleFan('fan2')">
+
+                  <input type="checkbox"
+                         id="fan2"
+                         onchange="toggleFan('fan2')">
+
                   <span class="slider"></span>
+
                 </label>
-                <div>Fan 2</div>
+
+                <div>冷凝模組</div>
+
             </div>
+
         </div>
     </div>
 
 </div>
 
-<!-- 右側 -->
+<!-- 右側圖表區 -->
 <div class="right">
+
+    <!-- 圖表標題 -->
     <h2 id="chartTitle">溫度變化圖</h2>
+
+    <!-- Chart.js 畫布 -->
     <canvas id="chart"></canvas>
+
 </div>
 
-<div class="status" id="status">初始化...</div>
+<!-- 底部狀態 -->
+<div class="status" id="status">初始化</div>
 
 <script>
 
-const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
+/* Firebase 資料庫網址 */
+const baseURL =
+"https://removewesh-default-rtdb.firebaseio.com";
 
+/* 目前顯示的圖表類型 */
 let currentType = "temp";
 
-/* 🔥 三種資料永遠同步更新 */
+/* 儲存圖表資料 */
 const dataStore = {
-    temp: { labels: [], data: [] },
-    hum:  { labels: [], data: [] },
-    ash:  { labels: [], data: [] }
+
+    temp: {
+        labels: [],
+        data: []
+    },
+
+    hum: {
+        labels: [],
+        data: []
+    },
+
+    ash: {
+        labels: [],
+        data: []
+    }
 };
 
-/* Chart */
-const ctx = document.getElementById("chart").getContext("2d");
+/* 取得 canvas */
+const ctx =
+document.getElementById("chart").getContext("2d");
 
+/* 建立圖表 */
 const chart = new Chart(ctx, {
+
     type: "line",
+
     data: {
+
         labels: [],
+
         datasets: [{
+
             data: [],
-            borderColor: "red",
+
+            /* 線條顏色 */
+            borderColor: "#00e5ff",
+
+            /* 線條粗細 */
             borderWidth: 2,
+
+            /* 不填滿 */
             fill: false,
+
+            /* 折線 */
             tension: 0
         }]
     },
+
     options: {
+
         responsive: true,
+
+        /* 關閉動畫 */
         animation: false,
+
         plugins: {
-            legend: { display: false }
+
+            /* 不顯示圖例 */
+            legend: {
+                display: false
+            }
+        },
+
+        scales: {
+
+            x: {
+                ticks: {
+                    color: "#aaa"
+                }
+            },
+
+            y: {
+                ticks: {
+                    color: "#aaa"
+                }
+            }
         }
     }
 });
 
-/* 切換顯示（只換視角） */
+/* 換圖表 */
 function showChart(type) {
+
+    /* 設定目前圖表 */
     currentType = type;
 
-    if (type === "temp") {
-        document.getElementById("chartTitle").innerText = "溫度變化圖";
-        chart.data.datasets[0].borderColor = "red";
-    }
+    /* 標題對應 */
+    const titleMap = {
 
-    if (type === "hum") {
-        document.getElementById("chartTitle").innerText = "濕度變化圖";
-        chart.data.datasets[0].borderColor = "blue";
-    }
+        temp: "溫度變化圖",
 
-    if (type === "ash") {
-        document.getElementById("chartTitle").innerText = "灰塵密度變化圖";
-        chart.data.datasets[0].borderColor = "green";
-    }
+        hum: "濕度變化圖",
 
-    chart.data.labels = dataStore[type].labels;
-    chart.data.datasets[0].data = dataStore[type].data;
+        ash: "灰塵密度變化圖"
+    };
 
+    /* 顏色對應 */
+    const colorMap = {
+
+        temp: "#ff4d4d",
+
+        hum: "#00c6ff",
+
+        ash: "#00ff88"
+    };
+
+    /* 更新標題 */
+    document.getElementById("chartTitle").innerText =
+    titleMap[type];
+
+    /* 更新線條顏色 */
+    chart.data.datasets[0].borderColor =
+    colorMap[type];
+
+    /* 更新圖表資料 */
+    chart.data.labels =
+    dataStore[type].labels;
+
+    chart.data.datasets[0].data =
+    dataStore[type].data;
+
+    /* 重新繪製 */
     chart.update();
 }
 
-/* 🔥 更新資料（核心修正） */
+/* 更新 Firebase 資料 */
 async function update() {
+
     try {
-        const res = await fetch(baseURL + "/.json");
+
+        /* 讀取 Firebase */
+        const res =
+        await fetch(baseURL + "/.json");
+
+        /* 轉 JSON */
         const data = await res.json();
 
+        /* 若沒有資料 */
         if (!data || !data.sensor) return;
 
+        /* sensor 區塊 */
         const s = data.sensor;
 
-        document.getElementById("temp").innerText = s.temperature + "°C";
-        document.getElementById("hum").innerText = s.humidity + "%";
-        document.getElementById("ash").innerText = s.ash ?? "--";
+        /* 更新畫面數值 */
+        document.getElementById("temp").innerText =
+        s.temperature + "°C";
 
-        const time = new Date().toLocaleTimeString();
+        document.getElementById("hum").innerText =
+        s.humidity + "%";
 
-        /* 🔥 三種資料全部同步記錄（重點） */
+        document.getElementById("ash").innerText =
+        s.ash ?? "--";
+
+        /* 取得目前時間 */
+        const time =
+        new Date().toLocaleTimeString();
+
+        /* 加入溫度資料 */
         dataStore.temp.labels.push(time);
         dataStore.temp.data.push(s.temperature);
 
+        /* 加入濕度資料 */
         dataStore.hum.labels.push(time);
         dataStore.hum.data.push(s.humidity);
 
+        /* 加入灰塵資料 */
         dataStore.ash.labels.push(time);
         dataStore.ash.data.push(s.ash ?? 0);
 
-        /* 限制長度 */
-        ["temp", "hum", "ash"].forEach(type => {
-            if (dataStore[type].labels.length > 10) {
-                dataStore[type].labels.shift();
-                dataStore[type].data.shift();
+        /* 最多保留10筆 */
+        ["temp","hum","ash"].forEach(t=>{
+
+            if(dataStore[t].labels.length > 10){
+
+                /* 移除最舊資料 */
+                dataStore[t].labels.shift();
+
+                dataStore[t].data.shift();
             }
         });
 
-        /* 更新畫面 */
-        chart.data.labels = dataStore[currentType].labels;
-        chart.data.datasets[0].data = dataStore[currentType].data;
+        /* 更新目前圖表 */
+        chart.data.labels =
+        dataStore[currentType].labels;
+
+        chart.data.datasets[0].data =
+        dataStore[currentType].data;
 
         chart.update();
 
+        /* 更新開關狀態 */
         if (data.control) {
-            document.getElementById("fan1").checked = data.control.fan1 === "1";
-            document.getElementById("fan2").checked = data.control.fan2 === "1";
+
+            document.getElementById("fan1").checked =
+            data.control.fan1 === "1";
+
+            document.getElementById("fan2").checked =
+            data.control.fan2 === "1";
         }
 
-        document.getElementById("status").innerText = "已連線";
+        /* 狀態文字 */
+        document.getElementById("status").innerText =
+        "已連線";
 
     } catch (e) {
-        document.getElementById("status").innerText = "連線失敗";
+
+        /* 失敗 */
+        document.getElementById("status").innerText =
+        "連線失敗";
     }
 }
 
-/* Fan 控制 */
+/* 控制風扇開關 */
 async function toggleFan(name) {
-    const el = document.getElementById(name);
-    const state = el.checked ? "1" : "0";
 
-    await fetch(baseURL + "/control/" + name + ".json", {
-        method: "PUT",
-        body: JSON.stringify(state)
-    });
+    /* 取得 checkbox */
+    const el =
+    document.getElementById(name);
+
+    /* 判斷開關 */
+    const state =
+    el.checked ? "1" : "0";
+
+    /* 寫入 Firebase */
+    await fetch(
+        baseURL + "/control/" + name + ".json",
+
+        {
+            method: "PUT",
+
+            body: JSON.stringify(state)
+        }
+    );
 }
 
+/* 初始化 */
+
+/* 第一次更新 */
 update();
+
+/* 每2秒更新一次 */
 setInterval(update, 2000);
 
 </script>
