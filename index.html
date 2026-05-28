@@ -55,7 +55,6 @@ body {
 
 /* 感測器介面 */
 .left .box {
-
     /* 寬度65% */
     width: 65%;
 
@@ -75,12 +74,6 @@ body {
     /* 變化效果 */  
     transition: 0.3s;
 
-    /* 陰影 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);*/
-
-    /* 半透明邊框 
-    border: 1px solid rgba(255,255,255,0.1);*/
-
     /* 介面背景 */
     backdrop-filter: blur(8px);
 }
@@ -89,15 +82,9 @@ body {
 .hum {
     background: linear-gradient(135deg, #00c6ff, #0072ff);
 }
-
 /* 溫度介面顏色 */
 .temp {
     background: linear-gradient(135deg, #ff512f, #dd2476);
-}
-
-/* 灰塵介面顏色 */
-.ash {
-    background: linear-gradient(135deg, #00b09b, #96c93d);
 }
 
 /* 數值字樣 */
@@ -127,8 +114,6 @@ body {
     backdrop-filter: blur(10px);
     /* 文字置中 */
     text-align: center;
-    /*
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);*/
 }
 
 /* 模組開關介面配置 */
@@ -153,11 +138,6 @@ body {
   height: 34px;
 }
 
-/* 隱藏原本 checkbox 
-.switch input {
-    display:none;
-}
-
 /* 開關 */
 .slider {
 
@@ -177,7 +157,7 @@ body {
 /* 開關圓球 */
 .slider:before {
 
-  content: "";
+  content: " ";
 
   position: absolute;
   /* 圓球高度 */
@@ -234,7 +214,6 @@ input:checked + .slider:before {
     /* 文字藍色 */
     color: #00e5ff;
 }
-
 /* 底部文字 */
 .status {
     /* 固定畫面底部 */
@@ -277,15 +256,6 @@ input:checked + .slider:before {
 
         <!-- 即時溫度 -->
         <div class="value" id="temp">--</div>
-    </div>
-
-    <!-- 灰塵濃度介面 -->
-    <div class="box ash" onclick="showChart('ash')">
-        <!-- 標題 -->
-        <h2>灰塵濃度</h2>
-
-        <!-- 即時灰塵數值 -->
-        <div class="value" id="ash">--</div>
     </div>
 
     <!-- 開關控制介面 -->
@@ -346,46 +316,32 @@ input:checked + .slider:before {
 <script>
 
 /* Firebase 資料庫網址 */
-const baseURL =
-"https://removewesh-default-rtdb.firebaseio.com";
+const baseURL = "https://removewesh-default-rtdb.firebaseio.com";
 
 /* 濕度變化圖表 */
 let currentType = "temp";
 
 /* 儲存即時資料 */
 const dataStore = {
-
     temp: {
         labels: [],
         data: []
     },
-
     hum: {
-        labels: [],
-        data: []
-    },
-
-    ash: {
         labels: [],
         data: []
     }
 };
 
 /* 取得 canvas */
-const ctx =
-document.getElementById("chart").getContext("2d");
+const ctx = document.getElementById("chart").getContext("2d");
 
 /* 建立圖表 */
 const chart = new Chart(ctx, {
-
     type: "line",
-
     data: {
-
         labels: [],
-
         datasets: [{
-
             data: [],
 
             /* 線條顏色 */
@@ -394,38 +350,29 @@ const chart = new Chart(ctx, {
             /* 線條粗細 */
             borderWidth: 3,
 
-            /* 不填滿 
-            fill: false,*/
-
             /* 折線 */
             tension: 0
         }]
     },
 
     options: {
-
         responsive: true,
-
         /* 取消圖表動畫 */
         animation: false,
         
         plugins: {
-
             /* 不顯示溫度提示 */
             legend: {
                 display: false 
             }
         },
-
         scales: {
-
             x: {
                 ticks: {
                     /* x軸文字顏色 */
                     color: "#aaa"
                 }
             },
-
             y: {
                 ticks: {
                     /* y軸文字顏色 */
@@ -438,45 +385,32 @@ const chart = new Chart(ctx, {
 
 /* 圖表切換 */
 function showChart(type) {
-
     /* 顯示目前圖表 */
     currentType = type;
 
     /* 標題對應 */
     const titleMap = {
-
-        temp: "溫度變化圖",
-
-        hum: "濕度變化圖",
-
-        ash: "灰塵密度變化圖"
+        temp: "溫度變化圖", 
+        hum: "濕度變化圖"
     };
 
     /* 顏色對應 */
     const colorMap = {
-
-        temp: "#ff4d4d",
-
-        hum: "#00c6ff",
-
-        ash: "#00ff88"
+        temp: "#ff4d4d", 
+        hum: "#00c6ff"
     };
 
     /* 更新標題 */
-    document.getElementById("chartTitle").innerText =
-    titleMap[type];
+    document.getElementById("chartTitle").innerText = titleMap[type];
 
     /* 更新線條顏色 */
-    chart.data.datasets[0].borderColor =
-    colorMap[type];
+    chart.data.datasets[0].borderColor = colorMap[type];
 
     /* 更新圖表資料 */
-    chart.data.labels =
-    dataStore[type].labels;
+    chart.data.labels = dataStore[type].labels;
 
     /* 更新圖表數值資料 */
-    chart.data.datasets[0].data =
-    dataStore[type].data;
+    chart.data.datasets[0].data = dataStore[type].data;
 
     /* 更新圖表 */
     chart.update();
@@ -484,12 +418,9 @@ function showChart(type) {
 
 /* 更新Firebase資料 */
 async function update() {
-
     try {
-
         /* 讀取Firebase資料 */
-        const res =
-        await fetch(baseURL + "/.json");
+        const res = await fetch(baseURL + "/.json");
 
         /* 轉json檔 */
         const data = await res.json();
@@ -501,14 +432,10 @@ async function update() {
         const s = data.sensor;
 
         /* 更新溫度數值 */
-        document.getElementById("temp").innerText =
-        s.temperature + "°C";
+        document.getElementById("temp").innerText = s.temperature + "°C";
+
         /* 更新濕度數值 */
-        document.getElementById("hum").innerText =
-        s.humidity + "%";
-        /* 更新灰塵濃度數值 */
-        document.getElementById("ash").innerText =
-        s.ash ?? "--";
+        document.getElementById("hum").innerText = s.humidity + "%";
 
         /* 取得目前時間 */
         const time =
@@ -522,78 +449,57 @@ async function update() {
         dataStore.hum.labels.push(time);
         dataStore.hum.data.push(s.humidity);
 
-        /* 加入灰塵濃度資料 */
-        dataStore.ash.labels.push(time);
-        dataStore.ash.data.push(s.ash ?? 0);
-
         /* 保留10筆資料 */
-        ["temp","hum","ash"].forEach(t=>{
-
-            if(dataStore[t].labels.length > 10){
-
+        ["temp","hum"].forEach(t=>
+        {
+            if(dataStore[t].labels.length > 10)
+            {
                 /* 超過10筆移除舊資料 */
                 dataStore[t].labels.shift();
+
                 /* 超過10筆移除舊數值 */
                 dataStore[t].data.shift();
             }
         });
-
         /* 更新目前圖表 */
-        chart.data.labels =
-        dataStore[currentType].labels;
+        chart.data.labels = dataStore[currentType].labels;
+
         /* 更新目前圖表資料 */
-        chart.data.datasets[0].data =
-        dataStore[currentType].data;
+        chart.data.datasets[0].data = dataStore[currentType].data;
 
         chart.update();
 
         /* 更新開關狀態 */
         if (data.control) {
             /* 進氣模組狀態 */
-            document.getElementById("fan1").checked =
-            data.control.fan1 === "1";
+            document.getElementById("fan1").checked = data.control.fan1 === "1";
             /* 冷凝模組狀態 */
-            document.getElementById("fan2").checked =
-            data.control.fan2 === "1";
+            document.getElementById("fan2").checked = data.control.fan2 === "1";
         }
-
         /* 連線成功底部顯示已連線 */
-        document.getElementById("status").innerText =
-        "已連線";
-
-    } catch (e) {
-
+        document.getElementById("status").innerText = "已連線";
+    } 
+    catch (e) {
         /* 連線失敗底部顯示連線失敗 */
-        document.getElementById("status").innerText =
-        "連線失敗";
+        document.getElementById("status").innerText = "連線失敗";
     }
 }
-
 /* 模組開關控制 */
 async function toggleFan(name) {
-
     /* 取得checkbox元件 */ 
-    const el =
-    document.getElementById(name);
-
+    const el = document.getElementById(name);
     /* 開關判斷1或0 */
-    const state =
-    el.checked ? "1" : "0";
-
+    const state = el.checked ? "1" : "0";
     /* 寫入Firebase */
-    await fetch(
-        baseURL + "/control/" + name + ".json",
-
+    await fetch(baseURL + "/control/" + name + ".json",
         {
             /* PUT更新資料 */
             method: "PUT",
- 
             /* 狀態轉成JSON檔格式 */
             body: JSON.stringify(state)
         }
     );
 }
-
 /* 第一次更新 */
 update();
 
@@ -604,4 +510,3 @@ setInterval(update, 2000);
 
 </body>
 </html>
-
