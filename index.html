@@ -84,7 +84,7 @@ body {
 }
 /* 溫度介面顏色 */
 .temp {
-    background: linear-gradient(135deg, #ff512f, #dd2476);
+    background: linear-gradient(135deg, #66ff99, #00cc66);
 }
 
 /* 數值字樣 */
@@ -449,10 +449,10 @@ async function update() {
         dataStore.hum.labels.push(time);
         dataStore.hum.data.push(s.humidity);
 
-        /* 保留10筆資料 */
+        /* 保留50筆資料 */
         ["temp","hum"].forEach(t=>
         {
-            if(dataStore[t].labels.length > 10)
+            if(dataStore[t].labels.length > 50)
             {
                 /* 超過10筆移除舊資料 */
                 dataStore[t].labels.shift();
